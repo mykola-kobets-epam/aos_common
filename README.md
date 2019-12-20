@@ -1,2 +1,2 @@
 # aos_common
-Containes common aos packages
+Contains common aos packages

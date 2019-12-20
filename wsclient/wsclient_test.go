@@ -29,8 +29,8 @@ import (
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	
-	"github.com/xen-troops/go-utils/wsclient"
-	"github.com/xen-troops/go-utils/wsserver"
+	"aos_common/wsclient"
+	"aos_common/wsserver"
 )
 
 /*******************************************************************************
