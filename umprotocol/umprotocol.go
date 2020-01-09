@@ -17,38 +17,55 @@
 
 package umprotocol
 
+import "encoding/json"
+
 /*******************************************************************************
  * Consts
  ******************************************************************************/
 
 // Message types
 const (
-	RevertType  = "systemRevert"
-	StatusType  = "status"
-	UpgradeType = "systemUpgrade"
+	UpgradeRequestType = "upgradeRequest"
+	RevertRequestType  = "revertRequest"
+	StatusRequestType  = "statusRequest"
+	StatusResponseType = "statusResponse"
 )
 
 // Operation status
 const (
 	SuccessStatus    = "success"
 	FailedStatus     = "failed"
-	InProgressStatus = "inprogress"
+	InProgressStatus = "inProgress"
 )
+
+// Operation type
+const (
+	UpgradeOperation = "upgrade"
+	RevertOperation  = "revert"
+)
+
+// Version specifies the protocol version
+const Version = 1
 
 /*******************************************************************************
  * Types
  ******************************************************************************/
 
-// MessageHeader UM message header
-type MessageHeader struct {
-	Type  string `json:"type"`
-	Error string `json:"error,omitempty"`
+// Header UM message header
+type Header struct {
+	Version     uint64 `json:"version"`
+	MessageType string `json:"messageType"`
 }
 
-// UpgradeFileInfo upgrade file info
-type UpgradeFileInfo struct {
-	Target string `json:"target"`
-	URL    string `json:"url"`
+// Message UM message structure
+type Message struct {
+	Header Header          `json:"header"`
+	Data   json.RawMessage `json:"data,omitempty"`
+}
+
+// ImageInfo upgrade image info
+type ImageInfo struct {
+	Path   string `json:"path"`
 	Sha256 []byte `json:"sha256"`
 	Sha512 []byte `json:"sha512"`
 	Size   uint64 `json:"size"`
@@ -56,27 +73,24 @@ type UpgradeFileInfo struct {
 
 // UpgradeReq system upgrade request
 type UpgradeReq struct {
-	MessageHeader
-	ImageVersion uint64            `json:"imageVersion"`
-	Files        []UpgradeFileInfo `json:"files"`
+	ImageVersion uint64    `json:"imageVersion"`
+	ImageInfo    ImageInfo `json:"imageInfo"`
 }
 
 // RevertReq system revert request
 type RevertReq struct {
-	MessageHeader
 	ImageVersion uint64 `json:"imageVersion"`
 }
 
-// GetStatusReq get system status request
-type GetStatusReq struct {
-	MessageHeader
+// StatusReq get system status request
+type StatusReq struct {
 }
 
-// StatusMessage status message
-type StatusMessage struct {
-	MessageHeader
-	Operation        string `json:"operation"` // upgrade, revert
-	Status           string `json:"status"`    // success, failed, inprogress
-	OperationVersion uint64 `json:"operationVersion"`
-	ImageVersion     uint64 `json:"imageVersion"`
+// StatusRsp status response message
+type StatusRsp struct {
+	Operation        string `json:"operation"`       // upgrade, revert
+	Status           string `json:"status"`          // success, failed, inProgress
+	Error            string `json:"error,omitempty"` // error message if status failed
+	RequestedVersion uint64 `json:"requestedVersion"`
+	CurrentVersion   uint64 `json:"currentVersion"`
 }
