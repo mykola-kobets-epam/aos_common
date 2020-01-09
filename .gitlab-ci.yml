@@ -3,7 +3,7 @@ image: golang:1.12
 stages:
   - test
 
-before_script: 
+before_script:
   - go get -u golang.org/x/lint/golint
   - go get -u github.com/golang/dep/cmd/dep
   - cp -r $CI_PROJECT_DIR /go/src/
@@ -11,11 +11,11 @@ before_script:
   - dep ensure
   - cp ci/rootCA.crt.pem  /etc/ssl/certs/
 
-test: 
+test:
   stage: test
-  script: 
-    - echo "#####Run Lint#####"
+  script:
+    - echo "==== Run Lint ===="
     - ci/lint.sh
-    - echo "#####Run Unit tests with coverage#####"
-    - go test  $(go list ./... | grep -v "/*proto*") -v -coverprofile .testCoverage.txt
+    - echo "==== Run Unit tests with coverage ===="
+    - go test  $(go list ./... | grep -v "/visprotocol") -v -coverprofile .testCoverage.txt
     - go tool cover -func=.testCoverage.txt
