@@ -18,3 +18,4 @@ test:
     - ci/lint.sh
     - echo "#####Run Unit tests with coverage#####"
     - go test  $(go list ./... | grep -v "/*proto*") -v -coverprofile .testCoverage.txt
+    - go tool cover -func=.testCoverage.txt
