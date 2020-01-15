@@ -18,9 +18,13 @@
 package image
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"errors"
+	"fmt"
 	"io"
 	"os"
+	"path"
 	"reflect"
 	"time"
 
@@ -175,4 +179,60 @@ func CreateFileInfo(fileName string) (fileInfo FileInfo, err error) {
 	fileInfo.Sha512 = hash512.Sum(nil)
 
 	return fileInfo, nil
+}
+
+// UntarGZArchive extract data from tar.gz archive
+func UntarGZArchive(source, destination string) (err error) {
+	if _, err := os.Stat(destination); os.IsNotExist(err) {
+		return err
+	}
+
+	archive, err := os.Open(source)
+	if err != nil {
+		return err
+	}
+	defer archive.Close()
+
+	gzipReader, err := gzip.NewReader(archive)
+	if err != nil {
+		return err
+	}
+	defer gzipReader.Close()
+
+	tarReader := tar.NewReader(gzipReader)
+
+	for {
+		header, err := tarReader.Next()
+
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			return fmt.Errorf("UntarGZArchive: Next() failed: %s", err.Error())
+		}
+
+		switch header.Typeflag {
+		case tar.TypeDir:
+			if header.Name == "./" {
+				continue
+			}
+			if err := os.Mkdir(path.Join(destination, header.Name), 0755); err != nil {
+				return err
+			}
+		case tar.TypeReg:
+			outFile, err := os.Create(path.Join(destination, header.Name))
+			if err != nil {
+				return err
+			}
+			defer outFile.Close()
+			if _, err := io.Copy(outFile, tarReader); err != nil {
+				return err
+			}
+		default:
+			log.Warning("Unknown tar Header type: ", header.Typeflag, header.Name)
+		}
+	}
+
+	return nil
 }
