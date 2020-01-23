@@ -75,7 +75,14 @@ type clientHandler struct {
 
 // New creates new Web socket server
 func New(name, url, cert, key string, newMessageProcessor NewMessageProcessor) (server *Server, err error) {
-	server = &Server{name: name, newMessageProcessor: newMessageProcessor, upgrader: websocket.Upgrader{}}
+	server = &Server{
+		name:                name,
+		newMessageProcessor: newMessageProcessor,
+		upgrader: websocket.Upgrader{
+			// TODO: Implement proper check origin validation
+			CheckOrigin: func(r *http.Request) bool { return true },
+		},
+	}
 
 	log.WithField("server", server.name).Debug("Create ws server")
 
