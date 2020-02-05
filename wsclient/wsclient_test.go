@@ -28,7 +28,7 @@ import (
 
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
-	
+
 	"aos_common/wsclient"
 	"aos_common/wsserver"
 )
@@ -116,17 +116,20 @@ func TestConnectDisconnect(t *testing.T) {
 	}
 }
 func TestSendRequest(t *testing.T) {
-	type Request struct {
+	type Header struct {
 		Type      string
 		RequestID string
-		Value     int
+	}
+
+	type Request struct {
+		Header Header
+		Value  int
 	}
 
 	type Response struct {
-		Type      string
-		RequestID string
-		Value     float32
-		Error     *string `json:"Error,omitempty"`
+		Header Header
+		Value  float32
+		Error  *string `json:"Error,omitempty"`
 	}
 
 	client, err := wsclient.New("Test", nil)
@@ -147,8 +150,8 @@ func TestSendRequest(t *testing.T) {
 			return
 		}
 
-		rsp.Type = req.Type
-		rsp.RequestID = req.RequestID
+		rsp.Header.Type = req.Header.Type
+		rsp.Header.RequestID = req.Header.RequestID
 		rsp.Value = float32(req.Value) / 10.0
 
 		if messageOut, err = json.Marshal(rsp); err != nil {
@@ -158,15 +161,15 @@ func TestSendRequest(t *testing.T) {
 		return messageOut
 	}
 
-	req := Request{Type: "GET", RequestID: uuid.New().String()}
+	req := Request{Header: Header{Type: "GET", RequestID: uuid.New().String()}}
 	rsp := Response{}
 
-	if err = client.SendRequest("RequestID", &req, &rsp); err != nil {
+	if err = client.SendRequest("Header.RequestID", req.Header.RequestID, &req, &rsp); err != nil {
 		t.Errorf("Can't send request: %s", err)
 	}
 
-	if rsp.Type != req.Type {
-		t.Errorf("Wrong response type: %s", rsp.Type)
+	if rsp.Header.Type != req.Header.Type {
+		t.Errorf("Wrong response type: %s", rsp.Header.Type)
 	}
 }
 
@@ -216,7 +219,7 @@ func TestWrongIDRequest(t *testing.T) {
 	req := Request{Type: "GET", RequestID: uuid.New().String()}
 	rsp := Response{}
 
-	if err = client.SendRequest("RequestID", &req, &rsp); err == nil {
+	if err = client.SendRequest("RequestID", req.RequestID, &req, &rsp); err == nil {
 		t.Error("Error expected")
 	}
 }

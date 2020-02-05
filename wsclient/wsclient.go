@@ -165,17 +165,21 @@ func (client *Client) Close() (err error) {
 }
 
 // SendRequest sends request and waits for response
-func (client *Client) SendRequest(idField string, req interface{}, rsp interface{}) (err error) {
-	requestID := reflect.ValueOf(req).Elem().FieldByName(idField)
-	if !requestID.IsValid() {
-		return errors.New("ID is invalid")
+func (client *Client) SendRequest(idField string, idValue interface{}, req interface{}, rsp interface{}) (err error) {
+	requestID := reflect.ValueOf(req).Elem()
+
+	for _, field := range strings.Split(idField, ".") {
+		requestID = requestID.FieldByName(field)
+		if !requestID.IsValid() {
+			return errors.New("ID is invalid")
+		}
 	}
 
 	if requestID.Kind() == reflect.Ptr {
 		requestID = requestID.Elem()
 	}
 
-	param := requestParam{id: requestID.Interface(), idField: idField, rspChannel: make(chan bool), rsp: rsp}
+	param := requestParam{id: idValue, idField: idField, rspChannel: make(chan bool), rsp: rsp}
 	client.requests.Store(param.id, param)
 	defer client.requests.Delete(param.id)
 
@@ -265,9 +269,13 @@ func (client *Client) processMessages() {
 				return true
 			}
 
-			requestID := reflect.ValueOf(param.rsp).Elem().FieldByName(param.idField)
-			if !requestID.IsValid() {
-				return true
+			requestID := reflect.ValueOf(param.rsp).Elem()
+
+			for _, field := range strings.Split(param.idField, ".") {
+				requestID = requestID.FieldByName(field)
+				if !requestID.IsValid() {
+					return true
+				}
 			}
 
 			if requestID.Kind() == reflect.Ptr {
