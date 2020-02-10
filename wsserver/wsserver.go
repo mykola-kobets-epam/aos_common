@@ -18,7 +18,6 @@
 package wsserver
 
 import (
-	"container/list"
 	"context"
 	"errors"
 	"net/http"
@@ -48,7 +47,7 @@ type Server struct {
 	httpServer *http.Server
 	upgrader   websocket.Upgrader
 	sync.Mutex
-	clients        *list.List
+	clients        map[string]*ClientHandler
 	processMessage ProcessMessage
 }
 
@@ -76,6 +75,7 @@ func New(name, url, cert, key string, processMessage ProcessMessage) (server *Se
 			CheckOrigin: func(r *http.Request) bool { return true },
 		},
 		processMessage: processMessage,
+		clients:        make(map[string]*ClientHandler),
 	}
 
 	log.WithField("server", server.name).Debug("Create ws server")
@@ -84,7 +84,6 @@ func New(name, url, cert, key string, processMessage ProcessMessage) (server *Se
 	serveMux.HandleFunc("/", server.handleConnection)
 
 	server.httpServer = &http.Server{Addr: url, Handler: serveMux}
-	server.clients = list.New()
 
 	go func(crt, key string) {
 		log.WithFields(log.Fields{"address": url, "crt": crt, "key": key}).Debug("Listen for clients")
@@ -103,10 +102,10 @@ func (server *Server) GetClients() (clients []*ClientHandler) {
 	server.Lock()
 	defer server.Unlock()
 
-	clients = make([]*ClientHandler, 0, server.clients.Len())
+	clients = make([]*ClientHandler, 0, len(server.clients))
 
-	for element := server.clients.Front(); element != nil; element = element.Next() {
-		clients = append(clients, element.Value.(*ClientHandler))
+	for _, client := range server.clients {
+		clients = append(clients, client)
 	}
 
 	return clients
@@ -119,11 +118,8 @@ func (server *Server) Close() {
 
 	log.WithField("server", server.name).Debug("Close ws server")
 
-	var next *list.Element
-	for element := server.clients.Front(); element != nil; element = next {
-		element.Value.(*ClientHandler).close(true)
-		next = element.Next()
-		server.clients.Remove(element)
+	for _, client := range server.clients {
+		client.close(true)
 	}
 
 	server.httpServer.Shutdown(context.Background())
@@ -186,7 +182,7 @@ func (server *Server) newHandler(w http.ResponseWriter, r *http.Request) (handle
 		return nil, err
 	}
 
-	server.clients.PushBack(handler)
+	server.clients[handler.RemoteAddr] = handler
 
 	return handler, nil
 }
@@ -195,13 +191,8 @@ func (server *Server) deleteHandler(handler *ClientHandler) (err error) {
 	server.Lock()
 	defer server.Unlock()
 
-	for element := server.clients.Front(); element != nil; element = element.Next() {
-		if element.Value.(*ClientHandler) == handler {
-			handler.close(false)
-			server.clients.Remove(element)
-			break
-		}
-	}
+	delete(server.clients, handler.RemoteAddr)
+	handler.close(false)
 
 	return nil
 }
