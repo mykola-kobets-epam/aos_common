@@ -69,34 +69,6 @@ func init() {
  * Tests
  ******************************************************************************/
 
-func TestConnectDisconnect(t *testing.T) {
-	server, err := wsserver.New("TestServer", hostURL, crtFile, keyFile, nil)
-	if err != nil {
-		t.Fatalf("Can't create ws server: %s", err)
-	}
-	defer server.Close()
-
-	time.Sleep(1 * time.Second)
-
-	client, err := wsclient.New("Test", nil)
-	if err != nil {
-		t.Fatalf("Can't create ws client: %s", err)
-	}
-	defer client.Close()
-
-	if err = client.Connect(serverURL); err != nil {
-		t.Errorf("Can't connect to ws server: %s", err)
-	}
-
-	if err = client.Disconnect(); err != nil {
-		t.Errorf("Can't connect to ws server: %s", err)
-	}
-
-	if err = client.Connect(serverURL); err != nil {
-		t.Errorf("Can't connect to ws server: %s", err)
-	}
-}
-
 func TestSendRequest(t *testing.T) {
 	type Header struct {
 		Type      string
@@ -303,5 +275,107 @@ func TestMessageHandler(t *testing.T) {
 
 	case <-time.After(5 * time.Second):
 		t.Error("Waiting message timeout")
+	}
+}
+
+func TestSendMessage(t *testing.T) {
+	type Message struct {
+		Type  string
+		Value int
+	}
+
+	server, err := wsserver.New("TestServer", hostURL, crtFile, keyFile,
+		func(messageType int, data []byte) (response []byte, err error) {
+			return data, nil
+		})
+	if err != nil {
+		t.Fatalf("Can't create ws server: %s", err)
+	}
+	defer server.Close()
+
+	messageChannel := make(chan Message)
+
+	time.Sleep(1 * time.Second)
+
+	client, err := wsclient.New("Test", func(data []byte) {
+		var message Message
+
+		if err := json.Unmarshal(data, &message); err != nil {
+			t.Errorf("Parse message error: %s", err)
+			return
+		}
+
+		messageChannel <- message
+	})
+	if err != nil {
+		t.Fatalf("Error create a new ws client")
+	}
+
+	// Send message to server before connect
+	if err := client.SendMessage(&Message{Type: "NOTIFY", Value: 123}); err == nil {
+		t.Error("Expect error because client is not connected")
+	}
+
+	if err = client.Connect(serverURL); err != nil {
+		t.Fatalf("Can't connect to ws server: %s", err)
+	}
+	defer client.Close()
+
+	if err := client.SendMessage(&Message{Type: "NOTIFY", Value: 123}); err != nil {
+		t.Errorf("Error sending message form client: %s", err)
+	}
+
+	select {
+	case message := <-messageChannel:
+		if message.Type != "NOTIFY" || message.Value != 123 {
+			t.Error("Wrong message value")
+		}
+
+	case <-time.After(5 * time.Second):
+		t.Error("Waiting message timeout")
+	}
+}
+
+func TestConnectDisconnect(t *testing.T) {
+	server, err := wsserver.New("TestServer", hostURL, crtFile, keyFile, nil)
+	if err != nil {
+		t.Fatalf("Can't create ws server: %s", err)
+	}
+	defer server.Close()
+
+	time.Sleep(1 * time.Second)
+
+	client, err := wsclient.New("Test", nil)
+	if err != nil {
+		t.Fatalf("Can't create ws client: %s", err)
+	}
+	defer client.Close()
+
+	if err = client.Connect(serverURL); err != nil {
+		t.Errorf("Can't connect to ws server: %s", err)
+	}
+
+	if err = client.Connect(serverURL); err == nil {
+		t.Error("Expect error because client is connected")
+	}
+
+	if err = client.Disconnect(); err != nil {
+		t.Errorf("Can't disconnect client: %s", err)
+	}
+
+	if client.IsConnected() == true {
+		t.Error("Client should not be connected")
+	}
+
+	if err = client.Connect(serverURL); err != nil {
+		t.Errorf("Can't connect to ws server: %s", err)
+	}
+
+	if len(server.GetClients()) == 0 {
+		t.Error("No connected clients")
+	}
+
+	if client.IsConnected() != true {
+		t.Error("Client should be connected")
 	}
 }
