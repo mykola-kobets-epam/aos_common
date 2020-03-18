@@ -27,8 +27,8 @@ import (
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 
-	"aos_common/wsclient"
-	"aos_common/wsserver"
+	"gitpct.epam.com/epmd-aepr/aos_common/wsclient"
+	"gitpct.epam.com/epmd-aepr/aos_common/wsserver"
 )
 
 /*******************************************************************************

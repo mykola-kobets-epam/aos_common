@@ -29,7 +29,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"aos_common/image"
+	"gitpct.epam.com/epmd-aepr/aos_common/image"
 )
 
 /*******************************************************************************

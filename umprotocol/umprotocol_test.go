@@ -23,7 +23,7 @@ import (
 	"reflect"
 	"testing"
 
-	"aos_common/umprotocol"
+	"gitpct.epam.com/epmd-aepr/aos_common/umprotocol"
 )
 
 /*******************************************************************************
