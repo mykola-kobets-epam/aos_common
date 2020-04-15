@@ -44,6 +44,12 @@ const keyFile = "../wsserver/data/key.pem"
  * Types
  ******************************************************************************/
 
+type processMessage func(messageType int, data []byte) (response []byte, err error)
+
+type testHandler struct {
+	processMessage
+}
+
 /*******************************************************************************
  * Vars
  ******************************************************************************/
@@ -86,7 +92,7 @@ func TestSendRequest(t *testing.T) {
 		Error  *string `json:"Error,omitempty"`
 	}
 
-	server, err := wsserver.New("TestServer", hostURL, crtFile, keyFile,
+	server, err := wsserver.New("TestServer", hostURL, crtFile, keyFile, newTestHandler(
 		func(messageType int, data []byte) (response []byte, err error) {
 			var req Request
 			var rsp Response
@@ -104,7 +110,7 @@ func TestSendRequest(t *testing.T) {
 			}
 
 			return response, nil
-		})
+		}))
 	if err != nil {
 		t.Fatalf("Can't create ws server: %s", err)
 	}
@@ -148,7 +154,7 @@ func TestWrongIDRequest(t *testing.T) {
 		Error     *string `json:"Error,omitempty"`
 	}
 
-	server, err := wsserver.New("TestServer", hostURL, crtFile, keyFile,
+	server, err := wsserver.New("TestServer", hostURL, crtFile, keyFile, newTestHandler(
 		func(messageType int, data []byte) (response []byte, err error) {
 			var req Request
 			var rsp Response
@@ -166,7 +172,7 @@ func TestWrongIDRequest(t *testing.T) {
 			}
 
 			return response, err
-		})
+		}))
 	if err != nil {
 		t.Fatalf("Can't create ws server: %s", err)
 	}
@@ -284,10 +290,10 @@ func TestSendMessage(t *testing.T) {
 		Value int
 	}
 
-	server, err := wsserver.New("TestServer", hostURL, crtFile, keyFile,
+	server, err := wsserver.New("TestServer", hostURL, crtFile, keyFile, newTestHandler(
 		func(messageType int, data []byte) (response []byte, err error) {
 			return data, nil
-		})
+		}))
 	if err != nil {
 		t.Fatalf("Can't create ws server: %s", err)
 	}
@@ -378,4 +384,22 @@ func TestConnectDisconnect(t *testing.T) {
 	if client.IsConnected() != true {
 		t.Error("Client should be connected")
 	}
+}
+
+/*******************************************************************************
+ * Private
+ ******************************************************************************/
+
+func newTestHandler(p processMessage) (handler *testHandler) {
+	return &testHandler{p}
+}
+
+func (handler *testHandler) ClientConnected(client *wsserver.Client) {
+}
+
+func (handler *testHandler) ProcessMessage(client *wsserver.Client, messageType int, message []byte) (response []byte, err error) {
+	return handler.processMessage(messageType, message)
+}
+
+func (handler *testHandler) ClientDisconnected(client *wsserver.Client) {
 }
