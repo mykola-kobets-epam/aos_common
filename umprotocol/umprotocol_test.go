@@ -31,10 +31,16 @@ import (
  ******************************************************************************/
 
 var messageMap = map[string]func() interface{}{
-	umprotocol.UpgradeRequestType: func() interface{} { return &umprotocol.UpgradeReq{} },
-	umprotocol.RevertRequestType:  func() interface{} { return &umprotocol.RevertReq{} },
-	umprotocol.StatusRequestType:  func() interface{} { return &umprotocol.StatusReq{} },
-	umprotocol.StatusResponseType: func() interface{} { return &umprotocol.StatusRsp{} },
+	umprotocol.UpgradeRequestType:     func() interface{} { return &umprotocol.UpgradeReq{} },
+	umprotocol.RevertRequestType:      func() interface{} { return &umprotocol.RevertReq{} },
+	umprotocol.StatusRequestType:      func() interface{} { return &umprotocol.StatusReq{} },
+	umprotocol.StatusResponseType:     func() interface{} { return &umprotocol.StatusRsp{} },
+	umprotocol.CreateKeysRequestType:  func() interface{} { return &umprotocol.CreateKeysReq{} },
+	umprotocol.CreateKeysResponseType: func() interface{} { return &umprotocol.CreateKeysRsp{} },
+	umprotocol.ApplyCertRequestType:   func() interface{} { return &umprotocol.ApplyCertReq{} },
+	umprotocol.ApplyCertResponseType:  func() interface{} { return &umprotocol.ApplyCertRsp{} },
+	umprotocol.GetCertRequestType:     func() interface{} { return &umprotocol.GetCertReq{} },
+	umprotocol.GetCertResponseType:    func() interface{} { return &umprotocol.GetCertRsp{} },
 }
 
 /*******************************************************************************
@@ -77,6 +83,54 @@ func TestMessages(t *testing.T) {
 				Error:            "this is serious error",
 				RequestedVersion: 13,
 				CurrentVersion:   344,
+			},
+		},
+		{
+			umprotocol.CreateKeysRequestType,
+			&umprotocol.CreateKeysReq{
+				Type:     "online",
+				SystemID: "systemID",
+				Password: "password",
+			},
+		},
+		{
+			umprotocol.CreateKeysResponseType,
+			&umprotocol.CreateKeysRsp{
+				Type:  "online",
+				Csr:   []byte("CSR"),
+				Error: "error",
+			},
+		},
+		{
+			umprotocol.ApplyCertRequestType,
+			&umprotocol.ApplyCertReq{
+				Type: "online",
+				Crt:  []byte("certificate"),
+			},
+		},
+		{
+			umprotocol.ApplyCertResponseType,
+			&umprotocol.ApplyCertRsp{
+				Type:   "online",
+				CrtURI: "crtURI",
+				Error:  "error",
+			},
+		},
+		{
+			umprotocol.GetCertRequestType,
+			&umprotocol.GetCertReq{
+				Type:   "online",
+				Issuer: []byte("issuer"),
+				Serial: "serial",
+			},
+		},
+		{
+			umprotocol.GetCertResponseType,
+			&umprotocol.GetCertRsp{
+				Type:   "online",
+				CrtURI: "crtURI",
+				KeyURI: "keyURI",
+				Error:  "error",
 			},
 		},
 	}
