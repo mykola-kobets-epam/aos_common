@@ -126,7 +126,7 @@ type ApplyCertReq struct {
 // ApplyCertRsp apply certificate response
 type ApplyCertRsp struct {
 	Type   string `json:"type"`
-	CrtURI string `json:"crtUri"`
+	CrtURL string `json:"crtUrl"`
 	Error  string `json:"error,omitempty"`
 }
 
@@ -140,7 +140,7 @@ type GetCertReq struct {
 // GetCertRsp get certificate response
 type GetCertRsp struct {
 	Type   string `json:"type"`
-	CrtURI string `json:"crtUri"`
-	KeyURI string `json:"keyUri"`
+	CrtURL string `json:"crtUrl"`
+	KeyURL string `json:"keyUrl"`
 	Error  string `json:"error,omitempty"`
 }
