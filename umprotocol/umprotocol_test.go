@@ -112,7 +112,7 @@ func TestMessages(t *testing.T) {
 			umprotocol.ApplyCertResponseType,
 			&umprotocol.ApplyCertRsp{
 				Type:   "online",
-				CrtURI: "crtURI",
+				CrtURL: "crtURL",
 				Error:  "error",
 			},
 		},
@@ -128,8 +128,8 @@ func TestMessages(t *testing.T) {
 			umprotocol.GetCertResponseType,
 			&umprotocol.GetCertRsp{
 				Type:   "online",
-				CrtURI: "crtURI",
-				KeyURI: "keyURI",
+				CrtURL: "crtURL",
+				KeyURL: "keyURL",
 				Error:  "error",
 			},
 		},
