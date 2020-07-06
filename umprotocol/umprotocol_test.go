@@ -97,7 +97,7 @@ func TestMessages(t *testing.T) {
 			umprotocol.CreateKeysResponseType,
 			&umprotocol.CreateKeysRsp{
 				Type:  "online",
-				Csr:   []byte("CSR"),
+				Csr:   "CSR",
 				Error: "error",
 			},
 		},
@@ -105,7 +105,7 @@ func TestMessages(t *testing.T) {
 			umprotocol.ApplyCertRequestType,
 			&umprotocol.ApplyCertReq{
 				Type: "online",
-				Crt:  []byte("certificate"),
+				Crt:  "certificate",
 			},
 		},
 		{

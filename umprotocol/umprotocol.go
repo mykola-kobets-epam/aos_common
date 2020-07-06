@@ -113,14 +113,14 @@ type CreateKeysReq struct {
 // CreateKeysRsp creates key pair response
 type CreateKeysRsp struct {
 	Type  string `json:"type"`
-	Csr   []byte `json:"csr"`
+	Csr   string `json:"csr"`
 	Error string `json:"error,omitempty"`
 }
 
 // ApplyCertReq apply certificate request
 type ApplyCertReq struct {
 	Type string `json:"type"`
-	Crt  []byte `json:"crt"`
+	Crt  string `json:"crt"`
 }
 
 // ApplyCertRsp apply certificate response
