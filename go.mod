@@ -1,6 +1,6 @@
 module gitpct.epam.com/epmd-aepr/aos_common
 
-go 1.12
+go 1.14
 
 require (
 	github.com/cavaliercoder/grab v2.0.0+incompatible
