@@ -5,3 +5,10 @@
 Contains common aos packages:
 
 * [umprotocol](doc/umprotocol.md) - AOS update manager protocol.
+
+Generate gRPC api:
+
+```bash
+cd api
+protoc -I certificatemanager/ certificatemanager/certificatemanager.proto --go_out=plugins=grpc:certificatemanager --go_opt=paths=source_relative
+```
