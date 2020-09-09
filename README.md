@@ -11,4 +11,6 @@ Generate gRPC api:
 ```bash
 cd api
 protoc -I certificatemanager/ certificatemanager/certificatemanager.proto --go_out=plugins=grpc:certificatemanager --go_opt=paths=source_relative
+
+protoc -I updatemanager/ updatemanager/updatemanager.proto --go_out=plugins=grpc:updatemanager --go_opt=paths=source_relative
 ```
