@@ -23,8 +23,9 @@ import (
 	"testing"
 
 	log "github.com/sirupsen/logrus"
-	"gitpct.epam.com/epmd-aepr/aos_common/fs"
-	"gitpct.epam.com/epmd-aepr/aos_common/utils/testtools"
+
+	"aos_common/fs"
+	"aos_common/utils/testtools"
 )
 
 /*******************************************************************************

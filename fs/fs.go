@@ -17,8 +17,15 @@
 package fs
 
 import (
+	"compress/gzip"
+	"fmt"
+	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -35,6 +42,13 @@ const (
 
 	//FS_MOUNT_RO is an exported type for internal type of syscall.MS_RDONLY
 	FS_MOUNT_RO = syscall.MS_RDONLY
+)
+
+const ioBufferSize = 1024 * 1024
+
+const (
+	copyBreathInterval = 5 * time.Second
+	copyBreathTime     = 500 * time.Millisecond
 )
 
 /*******************************************************************************
@@ -109,6 +123,104 @@ func Umount(mountPoint string) (err error) {
 	return nil
 }
 
+// Copy copies one partition to another
+func Copy(dst, src string) (copied int64, err error) {
+	log.WithFields(log.Fields{"src": src, "dst": dst}).Debug("Copy partition")
+
+	srcFile, err := os.OpenFile(src, os.O_RDONLY, 0)
+	if err != nil {
+		return 0, err
+	}
+	defer srcFile.Close()
+
+	dstFile, err := os.OpenFile(dst, os.O_RDWR, 0)
+	if err != nil {
+		return 0, err
+	}
+	defer dstFile.Close()
+
+	var duration time.Duration
+
+	if copied, duration, err = copyData(dstFile, srcFile); err != nil {
+		return copied, err
+	}
+
+	log.WithFields(log.Fields{"copied": copied, "duration": duration}).Debug("Copy partition")
+
+	return copied, nil
+}
+
+// CopyFromGzipArchive copies partition from archived file
+func CopyFromGzipArchive(dst, src string) (copied int64, err error) {
+	log.WithFields(log.Fields{"src": src, "dst": dst}).Debug("Copy partition from archive")
+
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return 0, err
+	}
+	defer srcFile.Close()
+
+	dstFile, err := os.OpenFile(dst, os.O_RDWR, 0)
+	if err != nil {
+		return 0, err
+	}
+	defer dstFile.Close()
+
+	gz, err := gzip.NewReader(srcFile)
+	if err != nil {
+		return 0, err
+	}
+	defer gz.Close()
+
+	var duration time.Duration
+
+	if copied, duration, err = copyData(dstFile, gz); err != nil {
+		return copied, err
+	}
+
+	log.WithFields(log.Fields{"copied": copied, "duration": duration}).Debug("Copy partition from archive")
+
+	return copied, nil
+}
+
+// GetDeviceByPartitionPath returns parent device path for partition
+// Example: input: /dev/nvme0n1p2 output: /dev/nvme0n1
+func GetDeviceByPartitionPath(partitionPath string) (devPath string, err error) {
+	out, err := exec.Command("lsblk", "-no", "pkname", partitionPath).Output()
+	if err != nil {
+		return "", err
+	}
+
+	return "/dev/" + strings.TrimSpace(string(out)), err
+}
+
+// GetPartitionNumByPartitionPath returns partition number by partition path
+// Example: input: /dev/nvme0n1p2 output: 2
+func GetPartitionNumByPartitionPath(partitionPath string) (num int, err error) {
+	partition, err := filepath.Rel("/dev", partitionPath)
+	if err != nil {
+		return 0, err
+	}
+
+	sysPath := fmt.Sprintf("/sys/class/block/%s/partition", partition)
+	//Check if file exists
+	if _, err := os.Stat(sysPath); err != nil {
+		return 0, err
+	}
+
+	b, err := ioutil.ReadFile(sysPath)
+	if err != nil || len(b) == 0 {
+		return 0, err
+	}
+
+	num, err = strconv.Atoi(strings.TrimSpace(string(b)))
+	if err != nil {
+		return 0, err
+	}
+
+	return num, err
+}
+
 /*******************************************************************************
  * Private
  ******************************************************************************/
@@ -131,4 +243,39 @@ func retry(caller func() error, restorer func(error)) (err error) {
 
 		i++
 	}
+}
+
+func copyData(dst io.Writer, src io.Reader) (copied int64, duration time.Duration, err error) {
+	startTime := time.Now()
+	buf := make([]byte, ioBufferSize)
+
+	for err != io.EOF {
+		var readCount int
+
+		if readCount, err = src.Read(buf); err != nil && err != io.EOF {
+			return copied, duration, err
+		}
+
+		if readCount > 0 {
+			var writeCount int
+
+			if writeCount, err = dst.Write(buf[:readCount]); err != nil {
+				return copied, duration, err
+			}
+
+			copied = copied + int64(writeCount)
+		}
+
+		if time.Now().After(startTime.Add(duration).Add(copyBreathInterval)) {
+			time.Sleep(copyBreathTime)
+
+			duration = time.Since(startTime)
+
+			log.WithFields(log.Fields{"copied": copied, "duration": duration}).Debug("Copy progress")
+		}
+	}
+
+	duration = time.Since(startTime)
+
+	return copied, duration, nil
 }
