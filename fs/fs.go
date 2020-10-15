@@ -39,9 +39,6 @@ import (
 const (
 	retryCount = 3
 	retryDelay = 1 * time.Second
-
-	//FS_MOUNT_RO is an exported type for internal type of syscall.MS_RDONLY
-	FS_MOUNT_RO = syscall.MS_RDONLY
 )
 
 const ioBufferSize = 1024 * 1024
