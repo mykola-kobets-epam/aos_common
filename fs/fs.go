@@ -31,8 +31,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
+
+// #cgo pkg-config: blkid
+// #include <blkid.h>
+import "C"
 
 /*******************************************************************************
  * Consts
@@ -49,6 +54,23 @@ const (
 	copyBreathInterval = 5 * time.Second
 	copyBreathTime     = 500 * time.Millisecond
 )
+
+const (
+	tagTypeLabel    = "LABEL"
+	tagTypeFSType   = "TYPE"
+	tagTypePartUUID = "PARTUUID"
+)
+
+/*******************************************************************************
+ * Types
+ ******************************************************************************/
+
+// PartInfo partition info
+type PartInfo struct {
+	PartUUID uuid.UUID
+	FSType   string
+	Label    string
+}
 
 /*******************************************************************************
  * Public
@@ -180,6 +202,50 @@ func CopyFromGzipArchive(dst, src string) (copied int64, err error) {
 	log.WithFields(log.Fields{"copied": copied, "duration": duration}).Debug("Copy partition from archive")
 
 	return copied, nil
+}
+
+// GetPartInfo returns partition info
+func GetPartInfo(partDevice string) (partInfo PartInfo, err error) {
+	var (
+		blkdev   C.blkid_dev
+		blkcache C.blkid_cache
+	)
+
+	if ret := C.blkid_get_cache(&blkcache, C.CString("/dev/null")); ret != 0 {
+		return PartInfo{}, errors.New("can't get blkid cache")
+	}
+
+	if blkdev = C.blkid_get_dev(blkcache, C.CString(partDevice), C.BLKID_DEV_NORMAL); blkdev == nil {
+		return PartInfo{}, errors.New("can't get blkid device")
+	}
+
+	iter := C.blkid_tag_iterate_begin(blkdev)
+
+	var (
+		tagType  *C.char
+		tagValue *C.char
+	)
+
+	for C.blkid_tag_next(iter, &tagType, &tagValue) == 0 {
+		switch C.GoString(tagType) {
+		case tagTypeLabel:
+			partInfo.Label = C.GoString(tagValue)
+
+		case tagTypeFSType:
+			partInfo.FSType = C.GoString(tagValue)
+
+		case tagTypePartUUID:
+			var err error
+
+			if partInfo.PartUUID, err = uuid.Parse(C.GoString(tagValue)); err != nil {
+				log.Errorf("Can't parse PARTUUID")
+			}
+		}
+	}
+
+	C.blkid_tag_iterate_end(iter)
+
+	return partInfo, nil
 }
 
 // GetParentDevice returns partition parent device
