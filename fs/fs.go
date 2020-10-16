@@ -18,11 +18,13 @@ package fs
 
 import (
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -180,20 +182,38 @@ func CopyFromGzipArchive(dst, src string) (copied int64, err error) {
 	return copied, nil
 }
 
-// GetDeviceByPartitionPath returns parent device path for partition
+// GetParentDevice returns partition parent device
 // Example: input: /dev/nvme0n1p2 output: /dev/nvme0n1
-func GetDeviceByPartitionPath(partitionPath string) (devPath string, err error) {
-	out, err := exec.Command("lsblk", "-no", "pkname", partitionPath).Output()
+func GetParentDevice(partitionPath string) (devPath string, err error) {
+	partition, err := filepath.Rel("/dev", partitionPath)
 	if err != nil {
 		return "", err
 	}
 
-	return "/dev/" + strings.TrimSpace(string(out)), err
+	items, err := ioutil.ReadDir("/sys/block")
+	if err != nil {
+		return "", err
+	}
+
+	for _, item := range items {
+		subItems, err := ioutil.ReadDir(path.Join("/sys/block", item.Name()))
+		if err != nil {
+			return "", err
+		}
+
+		for _, subItem := range subItems {
+			if subItem.Name() == partition {
+				return path.Join("/dev", item.Name()), nil
+			}
+		}
+	}
+
+	return "", errors.New("can't determine parent device")
 }
 
-// GetPartitionNumByPartitionPath returns partition number by partition path
+// GetPartitionNum returns partition number
 // Example: input: /dev/nvme0n1p2 output: 2
-func GetPartitionNumByPartitionPath(partitionPath string) (num int, err error) {
+func GetPartitionNum(partitionPath string) (num int, err error) {
 	partition, err := filepath.Rel("/dev", partitionPath)
 	if err != nil {
 		return 0, err
