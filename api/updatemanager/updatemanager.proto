@@ -41,9 +41,16 @@ enum UmState {
     UPDATED = 2;
     FAILED = 3;
 }
- 
+
+message UmComponent {
+    string id = 1 ;
+    string version = 2 ;
+    string error = 3;
+}
+
 message UpdateStatus {
     string um_id = 1;
     UmState um_state = 2 ;
     string error = 3 ;
+    repeated UmComponent components = 4;
 }
