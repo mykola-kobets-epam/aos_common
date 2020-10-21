@@ -18,10 +18,20 @@ message SmMessages {
 }
  
 // SM messages
+
+message PrepareComponentInfo {    
+    string id = 1;
+    string vendor_version = 2;
+    uint64 aos_version = 3;
+    string annotations = 4;
+    string url = 5;
+    bytes sha256 = 6;
+    bytes sha512 = 7;
+    uint64 size = 8;
+}
  
 message PrepareUpdate {
-    string url = 1;
-    uint64 version = 2;
+    repeated PrepareComponentInfo components = 1 ;
 }
  
 message StartUpdate {
@@ -42,15 +52,23 @@ enum UmState {
     FAILED = 3;
 }
 
-message UmComponent {
+enum ComponentStatus {
+    INSTALLED = 0;
+    INSTALLING = 1;
+    ERROR = 2;
+}
+
+message SystemComponent {
     string id = 1 ;
-    string version = 2 ;
-    string error = 3;
+    string vendor_version = 2 ;
+    uint64 aos_version = 3 ;
+    ComponentStatus status = 4;
+    string error = 5;
 }
 
 message UpdateStatus {
     string um_id = 1;
     UmState um_state = 2 ;
     string error = 3 ;
-    repeated UmComponent components = 4;
+    repeated SystemComponent components = 4;
 }
