@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
+// Copyright 2020 Renesas Inc.
 // Copyright 2020 EPAM Systems Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");

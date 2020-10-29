@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 //
+// Copyright 2020 Renesas Inc.
 // Copyright 2020 EPAM Systems Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -88,18 +89,6 @@ func TestMain(m *testing.M) {
  * Tests
  ******************************************************************************/
 
-func mountUmount(t *testing.T) {
-	for _, part := range disk.Partitions {
-		if err := fs.Mount(part.Device, mountPoint, part.Type, 0, ""); err != nil {
-			t.Fatalf("Can't mount partition: %s", err)
-		}
-
-		if err := fs.Umount(mountPoint); err != nil {
-			t.Fatalf("Can't umount partition: %s", err)
-		}
-	}
-}
-
 func TestMountUmountContinued(t *testing.T) {
 	for i := 0; i < 50; i++ {
 		mountUmount(t)
@@ -112,6 +101,22 @@ func TestMountAlreadyMounted(t *testing.T) {
 			t.Fatalf("Can't mount partition: %s", err)
 		}
 
+		if err := fs.Mount(part.Device, mountPoint, part.Type, 0, ""); err != nil {
+			t.Fatalf("Can't mount partition: %s", err)
+		}
+
+		if err := fs.Umount(mountPoint); err != nil {
+			t.Fatalf("Can't umount partition: %s", err)
+		}
+	}
+}
+
+/*******************************************************************************
+ * Private
+ ******************************************************************************/
+
+func mountUmount(t *testing.T) {
+	for _, part := range disk.Partitions {
 		if err := fs.Mount(part.Device, mountPoint, part.Type, 0, ""); err != nil {
 			t.Fatalf("Can't mount partition: %s", err)
 		}
