@@ -61,6 +61,7 @@ const (
 
 // PartInfo partition info
 type PartInfo struct {
+	Device   string
 	PartUUID uuid.UUID
 	FSType   string
 	Label    string
@@ -144,6 +145,8 @@ func GetPartInfo(partDevice string) (partInfo PartInfo, err error) {
 	if blkdev = C.blkid_get_dev(blkcache, C.CString(partDevice), C.BLKID_DEV_NORMAL); blkdev == nil {
 		return PartInfo{}, errors.New("can't get blkid device")
 	}
+
+	partInfo.Device = C.GoString(C.blkid_dev_devname(blkdev))
 
 	iter := C.blkid_tag_iterate_begin(blkdev)
 
