@@ -44,7 +44,7 @@ const keyFile = "../wsserver/data/key.pem"
  * Types
  ******************************************************************************/
 
-type processMessage func(messageType int, data []byte) (response []byte, err error)
+type processMessage func(client *wsserver.Client, messageType int, data []byte) (response []byte, err error)
 
 type testHandler struct {
 	processMessage
@@ -93,7 +93,7 @@ func TestSendRequest(t *testing.T) {
 	}
 
 	server, err := wsserver.New("TestServer", hostURL, crtFile, keyFile, newTestHandler(
-		func(messageType int, data []byte) (response []byte, err error) {
+		func(client *wsserver.Client, messageType int, data []byte) (response []byte, err error) {
 			var req Request
 			var rsp Response
 
@@ -140,6 +140,85 @@ func TestSendRequest(t *testing.T) {
 	}
 }
 
+func TestMultipleResponses(t *testing.T) {
+	type Header struct {
+		Type      string
+		RequestID string
+	}
+
+	type Request struct {
+		Header Header
+		Value  int
+	}
+
+	type Response struct {
+		Header Header
+		Value  float32
+		Error  *string `json:"Error,omitempty"`
+	}
+
+	server, err := wsserver.New("TestServer", hostURL, crtFile, keyFile, newTestHandler(
+		func(client *wsserver.Client, messageType int, data []byte) (response []byte, err error) {
+			var req Request
+			var rsp Response
+
+			if err = json.Unmarshal(data, &req); err != nil {
+				return nil, err
+			}
+
+			rsp.Header.Type = req.Header.Type
+			rsp.Header.RequestID = req.Header.RequestID
+			rsp.Value = float32(req.Value) / 10.0
+
+			if response, err = json.Marshal(rsp); err != nil {
+				return nil, err
+			}
+
+			if err = client.SendMessage(messageType, response); err != nil {
+				return nil, err
+			}
+
+			rsp.Header.RequestID = uuid.New().String()
+
+			if response, err = json.Marshal(rsp); err != nil {
+				return nil, err
+			}
+
+			return response, nil
+		}))
+	if err != nil {
+		t.Fatalf("Can't create ws server: %s", err)
+	}
+	defer server.Close()
+
+	time.Sleep(1 * time.Second)
+
+	client, err := wsclient.New("Test", nil)
+	if err != nil {
+		t.Fatalf("Can't create ws client: %s", err)
+	}
+	defer client.Close()
+
+	if err = client.Connect(serverURL); err != nil {
+		t.Fatalf("Can't connect to ws server: %s", err)
+	}
+
+	req := Request{Header: Header{Type: "GET", RequestID: uuid.New().String()}}
+	rsp := Response{}
+
+	if err = client.SendRequest("Header.RequestID", req.Header.RequestID, &req, &rsp); err != nil {
+		t.Errorf("Can't send request: %s", err)
+	}
+
+	if rsp.Header.Type != req.Header.Type {
+		t.Errorf("Wrong response type: %s", rsp.Header.Type)
+	}
+
+	if rsp.Header.RequestID != req.Header.RequestID {
+		t.Errorf("Wrong request ID: %s", rsp.Header.RequestID)
+	}
+}
+
 func TestWrongIDRequest(t *testing.T) {
 	type Request struct {
 		Type      string
@@ -155,7 +234,7 @@ func TestWrongIDRequest(t *testing.T) {
 	}
 
 	server, err := wsserver.New("TestServer", hostURL, crtFile, keyFile, newTestHandler(
-		func(messageType int, data []byte) (response []byte, err error) {
+		func(client *wsserver.Client, messageType int, data []byte) (response []byte, err error) {
 			var req Request
 			var rsp Response
 
@@ -291,7 +370,7 @@ func TestSendMessage(t *testing.T) {
 	}
 
 	server, err := wsserver.New("TestServer", hostURL, crtFile, keyFile, newTestHandler(
-		func(messageType int, data []byte) (response []byte, err error) {
+		func(client *wsserver.Client, messageType int, data []byte) (response []byte, err error) {
 			return data, nil
 		}))
 	if err != nil {
@@ -398,7 +477,7 @@ func (handler *testHandler) ClientConnected(client *wsserver.Client) {
 }
 
 func (handler *testHandler) ProcessMessage(client *wsserver.Client, messageType int, message []byte) (response []byte, err error) {
-	return handler.processMessage(messageType, message)
+	return handler.processMessage(client, messageType, message)
 }
 
 func (handler *testHandler) ClientDisconnected(client *wsserver.Client) {
