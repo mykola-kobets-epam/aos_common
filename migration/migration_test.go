@@ -142,15 +142,11 @@ func TestInitialMigration(t *testing.T) {
 		t.Errorf("Error preparing test db, err %s", err)
 	}
 
-	if err := generateMigrationFiles(0, "tmp/migration/migrations0"); err != nil {
-		t.Errorf("Can't generate migration files for ver %d", nextVersion)
-	}
-
 	if err := generateMigrationFiles(nextVersion, "tmp/migration/migrations25"); err != nil {
 		t.Errorf("Can't generate migration files for ver %d", nextVersion)
 	}
 
-	dbLocal, err := startMigrationRoutine("tmp/migration/test.db", "tmp/migration/migrations0",
+	dbLocal, err := startMigrationRoutine("tmp/migration/test.db", "tmp/migration/",
 		"tmp/migration/mergedMigration", initialVersion)
 	if err != nil {
 		t.Errorf("Can't create database: %s", err)
