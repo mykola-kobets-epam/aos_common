@@ -7,6 +7,8 @@ import "google/protobuf/empty.proto";
 package iamanager;
 
 service IAManager {
+    rpc GetCertTypes(google.protobuf.Empty) returns (GetCertTypesRsp) {}
+    rpc FinishProvisioning(google.protobuf.Empty) returns (google.protobuf.Empty) {}
     rpc Clear(ClearReq) returns (google.protobuf.Empty) {}
     rpc SetOwner(SetOwnerReq) returns (google.protobuf.Empty) {}
     rpc CreateKeys(CreateKeysReq) returns (CreateKeysRsp) {}
@@ -16,6 +18,10 @@ service IAManager {
     rpc SetUsers(SetUsersReq) returns (google.protobuf.Empty) {}
     rpc GetUsers(google.protobuf.Empty) returns (GetUsersRsp) {}
     rpc SubscribeUsersChanged(google.protobuf.Empty) returns (stream UsersChangedNtf) {}
+}
+
+message GetCertTypesRsp {
+    repeated string types = 1;
 }
 
 message ClearReq {
