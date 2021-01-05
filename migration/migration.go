@@ -66,6 +66,11 @@ func DoMigrate(sql *sql.DB, migrationPath string, migrateVersion uint) (err erro
 
 	log.Debugf("Got database version: %d", version)
 
+	if version == migrateVersion {
+		log.Debugf("No migration needed. db version is: %d", int(migrateVersion))
+		return nil
+	}
+
 	err = m.Migrate(migrateVersion)
 	if err == migrate.ErrNoChange {
 		log.Debugf("No migration needed. db version is: %d", int(migrateVersion))
