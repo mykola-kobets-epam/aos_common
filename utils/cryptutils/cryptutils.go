@@ -18,6 +18,8 @@
 package cryptutils
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 	"path"
@@ -37,6 +39,57 @@ func GetCertFileFromDir(storageDir string) (crtFile string, err error) {
 // GetKeyFileFromDir returns first key file from directory
 func GetKeyFileFromDir(storageDir string) (keyFile string, err error) {
 	return getFileByExtension(storageDir, keyExt)
+}
+
+// GetClientTLSConfig returns client TLS configuration
+func GetClientTLSConfig(CACert, certStorageDir string) (config *tls.Config, err error) {
+	pemCA, err := ioutil.ReadFile(CACert)
+	if err != nil {
+		return config, err
+	}
+
+	certPool := x509.NewCertPool()
+	if !certPool.AppendCertsFromPEM(pemCA) {
+		return config, fmt.Errorf("failed to add CA's certificate")
+	}
+
+	clientCert, err := getKeyPairFromDir(certStorageDir)
+	if err != nil {
+		return config, err
+	}
+
+	config = &tls.Config{
+		Certificates: []tls.Certificate{clientCert},
+		RootCAs:      certPool,
+	}
+
+	return config, nil
+}
+
+// GetServerTLSConfig returns server TLS configuration
+func GetServerTLSConfig(CACert, certStorageDir string) (config *tls.Config, err error) {
+	pemCA, err := ioutil.ReadFile(CACert)
+	if err != nil {
+		return config, err
+	}
+
+	certPool := x509.NewCertPool()
+	if !certPool.AppendCertsFromPEM(pemCA) {
+		return config, fmt.Errorf("failed to add CA's certificate")
+	}
+
+	serverCert, err := getKeyPairFromDir(certStorageDir)
+	if err != nil {
+		return config, err
+	}
+
+	config = &tls.Config{
+		Certificates: []tls.Certificate{serverCert},
+		ClientAuth:   tls.RequireAndVerifyClientCert,
+		ClientCAs:    certPool,
+	}
+
+	return config, nil
 }
 
 /*******************************************************************************
@@ -60,4 +113,18 @@ func getFileByExtension(dir, ext string) (resultFile string, err error) {
 	}
 
 	return "", fmt.Errorf("no *%s files in %s", ext, dir)
+}
+
+func getKeyPairFromDir(dir string) (cert tls.Certificate, err error) {
+	crtFile, err := getFileByExtension(dir, crtExt)
+	if err != nil {
+		return cert, err
+	}
+
+	keyFile, err := getFileByExtension(dir, keyExt)
+	if err != nil {
+		return cert, err
+	}
+
+	return tls.LoadX509KeyPair(crtFile, keyFile)
 }
