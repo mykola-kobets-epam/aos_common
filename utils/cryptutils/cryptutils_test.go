@@ -308,6 +308,14 @@ func TestGetTLSConfig(t *testing.T) {
 	if _, err = cryptutils.GetServerMutualTLSConfig(path.Join(tlsDir, "root."+cryptutils.PEMExt), tlsDir); err != nil {
 		t.Errorf("Can't get server mutual TLS config: %s", err)
 	}
+
+	if _, err = cryptutils.GetClientTLSConfig(tlsDir); err != nil {
+		t.Errorf("Can't get client TLS config: %s", err)
+	}
+
+	if _, err = cryptutils.GetServerTLSConfig(tlsDir); err != nil {
+		t.Errorf("Can't get server TLS config: %s", err)
+	}
 }
 
 /*******************************************************************************

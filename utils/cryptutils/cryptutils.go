@@ -102,6 +102,20 @@ func GetClientMutualTLSConfig(CACert, certStorageDir string) (config *tls.Config
 	return config, nil
 }
 
+// GetClientTLSConfig returns client TLS configuration
+func GetClientTLSConfig(certStorageDir string) (config *tls.Config, err error) {
+	clientCert, err := getKeyPairFromDir(certStorageDir)
+	if err != nil {
+		return nil, err
+	}
+
+	config = &tls.Config{
+		Certificates: []tls.Certificate{clientCert},
+	}
+
+	return config, nil
+}
+
 // GetServerMutualTLSConfig returns server mutual TLS configuration
 func GetServerMutualTLSConfig(CACert, certStorageDir string) (config *tls.Config, err error) {
 	certPool, err := GetCaCertPool(CACert)
@@ -118,6 +132,21 @@ func GetServerMutualTLSConfig(CACert, certStorageDir string) (config *tls.Config
 		Certificates: []tls.Certificate{serverCert},
 		ClientAuth:   tls.RequireAndVerifyClientCert,
 		ClientCAs:    certPool,
+	}
+
+	return config, nil
+}
+
+// GetServerTLSConfig returns server TLS configuration
+func GetServerTLSConfig(certStorageDir string) (config *tls.Config, err error) {
+	serverCert, err := getKeyPairFromDir(certStorageDir)
+	if err != nil {
+		return nil, err
+	}
+
+	config = &tls.Config{
+		Certificates: []tls.Certificate{serverCert},
+		ClientAuth:   tls.NoClientCert,
 	}
 
 	return config, nil
