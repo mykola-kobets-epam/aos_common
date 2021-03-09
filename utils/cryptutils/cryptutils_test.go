@@ -301,12 +301,12 @@ func TestGetTLSConfig(t *testing.T) {
 		t.Fatalf("Can't save certificate: %s", err)
 	}
 
-	if _, err = cryptutils.GetClientTLSConfig(path.Join(tlsDir, "root."+cryptutils.PEMExt), tlsDir); err != nil {
+	if _, err = cryptutils.GetClientMutualTLSConfig(path.Join(tlsDir, "root."+cryptutils.PEMExt), tlsDir); err != nil {
 		t.Errorf("Can't get client TLS config: %s", err)
 	}
 
-	if _, err = cryptutils.GetServerTLSConfig(path.Join(tlsDir, "root."+cryptutils.PEMExt), tlsDir); err != nil {
-		t.Errorf("Can't get server TLS config: %s", err)
+	if _, err = cryptutils.GetServerMutualTLSConfig(path.Join(tlsDir, "root."+cryptutils.PEMExt), tlsDir); err != nil {
+		t.Errorf("Can't get server mutual TLS config: %s", err)
 	}
 }
 

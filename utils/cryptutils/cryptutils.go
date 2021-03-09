@@ -82,8 +82,8 @@ func GetCaCertPool(rootCaFilePath string) (caCertPool *x509.CertPool, err error)
 	return caCertPool, nil
 }
 
-// GetClientTLSConfig returns client TLS configuration
-func GetClientTLSConfig(CACert, certStorageDir string) (config *tls.Config, err error) {
+// GetClientMutualTLSConfig returns client mutual TLS configuration
+func GetClientMutualTLSConfig(CACert, certStorageDir string) (config *tls.Config, err error) {
 	certPool, err := GetCaCertPool(CACert)
 	if err != nil {
 		return nil, err
@@ -102,8 +102,8 @@ func GetClientTLSConfig(CACert, certStorageDir string) (config *tls.Config, err 
 	return config, nil
 }
 
-// GetServerTLSConfig returns server TLS configuration
-func GetServerTLSConfig(CACert, certStorageDir string) (config *tls.Config, err error) {
+// GetServerMutualTLSConfig returns server mutual TLS configuration
+func GetServerMutualTLSConfig(CACert, certStorageDir string) (config *tls.Config, err error) {
 	certPool, err := GetCaCertPool(CACert)
 	if err != nil {
 		return nil, err
