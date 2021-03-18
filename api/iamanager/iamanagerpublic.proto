@@ -6,7 +6,7 @@ import "iamanagercommon.proto";
 
 package iamanager;
 
-service PublicIAManager {
+service IAManagerPublic {
     rpc GetPermissions(GetPermissionsReq) returns (Permissions) {}
 }
 
