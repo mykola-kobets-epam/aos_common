@@ -48,6 +48,8 @@ github.com/sirupsen/logrus
 ## explicit
 golang.org/x/crypto/sha3
 # golang.org/x/net v0.0.0-20201029221708-28c70e62bb1d
+## explicit
+golang.org/x/net/context
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack

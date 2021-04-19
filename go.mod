@@ -13,6 +13,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/sirupsen/logrus v1.7.0
 	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
+	golang.org/x/net v0.0.0-20201029221708-28c70e62bb1d
 	google.golang.org/grpc v1.33.1
 	google.golang.org/protobuf v1.25.0
 )
