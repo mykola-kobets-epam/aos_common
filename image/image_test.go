@@ -133,17 +133,12 @@ func TestUntarGZArchive(t *testing.T) {
 }
 
 func TestDownload(t *testing.T) {
-	handler, err := image.New()
-	if err != nil {
-		t.Fatalf("Create new handler fault: %s", err)
-	}
-
-	if _, err = handler.Download(workDir, "https://gobyexample.com/maps"); err != nil {
+	if _, err := image.Download(workDir, "https://gobyexample.com/maps"); err != nil {
 		t.Errorf("File can not be downloaded: %s", err)
 	}
 
-	if _, err = handler.Download(workDir, "fake_url"); err == nil {
-		t.Errorf("Expect error becouse we use a fake URL: %s", err)
+	if _, err := image.Download(workDir, "fake_url"); err == nil {
+		t.Errorf("Expect error because we use a fake URL: %s", err)
 	}
 }
 
