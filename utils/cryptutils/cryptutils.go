@@ -104,14 +104,14 @@ func GetClientMutualTLSConfig(CACert, certStorageDir string) (config *tls.Config
 }
 
 // GetClientTLSConfig returns client TLS configuration
-func GetClientTLSConfig(certStorageDir string) (config *tls.Config, err error) {
-	clientCert, err := getKeyPairFromDir(certStorageDir)
+func GetClientTLSConfig(CACert string) (config *tls.Config, err error) {
+	certPool, err := GetCaCertPool(CACert)
 	if err != nil {
 		return nil, err
 	}
 
 	config = &tls.Config{
-		Certificates: []tls.Certificate{clientCert},
+		RootCAs: certPool,
 	}
 
 	return config, nil
