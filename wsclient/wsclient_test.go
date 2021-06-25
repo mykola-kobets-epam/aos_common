@@ -39,6 +39,7 @@ const hostURL = ":8088"
 const serverURL = "wss://localhost:8088"
 const crtFile = "../wsserver/data/crt.pem"
 const keyFile = "../wsserver/data/key.pem"
+const caCert = "../wsserver/data/rootCA.pem"
 
 /*******************************************************************************
  * Types
@@ -70,6 +71,13 @@ func init() {
 /*******************************************************************************
  * Main
  ******************************************************************************/
+
+func TestMain(m *testing.M) {
+
+	ret := m.Run()
+
+	os.Exit(ret)
+}
 
 /*******************************************************************************
  * Tests
@@ -118,7 +126,7 @@ func TestSendRequest(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	client, err := wsclient.New("Test", nil)
+	client, err := wsclient.New("Test", wsclient.ClientParam{CaCertFile: caCert}, nil)
 	if err != nil {
 		t.Fatalf("Can't create ws client: %s", err)
 	}
@@ -193,7 +201,7 @@ func TestMultipleResponses(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	client, err := wsclient.New("Test", nil)
+	client, err := wsclient.New("Test", wsclient.ClientParam{CaCertFile: caCert}, nil)
 	if err != nil {
 		t.Fatalf("Can't create ws client: %s", err)
 	}
@@ -259,7 +267,7 @@ func TestWrongIDRequest(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	client, err := wsclient.New("Test", nil)
+	client, err := wsclient.New("Test", wsclient.ClientParam{CaCertFile: caCert}, nil)
 	if err != nil {
 		t.Fatalf("Can't create ws client: %s", err)
 	}
@@ -286,7 +294,7 @@ func TestErrorChannel(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	client, err := wsclient.New("Test", nil)
+	client, err := wsclient.New("Test", wsclient.ClientParam{CaCertFile: caCert}, nil)
 	if err != nil {
 		t.Fatalf("Can't create ws client: %s", err)
 	}
@@ -322,7 +330,7 @@ func TestMessageHandler(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	client, err := wsclient.New("Test", func(data []byte) {
+	client, err := wsclient.New("Test", wsclient.ClientParam{CaCertFile: caCert}, func(data []byte) {
 		var message Message
 
 		if err := json.Unmarshal(data, &message); err != nil {
@@ -335,11 +343,11 @@ func TestMessageHandler(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Can't create ws client: %s", err)
 	}
+	defer client.Close()
 
 	if err = client.Connect(serverURL); err != nil {
 		t.Fatalf("Can't connect to ws server: %s", err)
 	}
-	defer client.Close()
 
 	clientHandlers := server.GetClients()
 	if len(clientHandlers) == 0 {
@@ -382,7 +390,7 @@ func TestSendMessage(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	client, err := wsclient.New("Test", func(data []byte) {
+	client, err := wsclient.New("Test", wsclient.ClientParam{CaCertFile: caCert}, func(data []byte) {
 		var message Message
 
 		if err := json.Unmarshal(data, &message); err != nil {
@@ -393,8 +401,9 @@ func TestSendMessage(t *testing.T) {
 		messageChannel <- message
 	})
 	if err != nil {
-		t.Fatalf("Error create a new ws client")
+		t.Fatalf("Error create a new ws client: %s", err)
 	}
+	defer client.Close()
 
 	// Send message to server before connect
 	if err := client.SendMessage(&Message{Type: "NOTIFY", Value: 123}); err == nil {
@@ -404,7 +413,6 @@ func TestSendMessage(t *testing.T) {
 	if err = client.Connect(serverURL); err != nil {
 		t.Fatalf("Can't connect to ws server: %s", err)
 	}
-	defer client.Close()
 
 	if err := client.SendMessage(&Message{Type: "NOTIFY", Value: 123}); err != nil {
 		t.Errorf("Error sending message form client: %s", err)
@@ -430,7 +438,7 @@ func TestConnectDisconnect(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	client, err := wsclient.New("Test", nil)
+	client, err := wsclient.New("Test", wsclient.ClientParam{CaCertFile: caCert}, nil)
 	if err != nil {
 		t.Fatalf("Can't create ws client: %s", err)
 	}
@@ -463,6 +471,52 @@ func TestConnectDisconnect(t *testing.T) {
 	if client.IsConnected() != true {
 		t.Error("Client should be connected")
 	}
+}
+
+func TestWrongCaCert(t *testing.T) {
+	server, err := wsserver.New("TestServer", hostURL, crtFile, keyFile, newTestHandler(
+		func(client *wsserver.Client, messageType int, data []byte) (response []byte, err error) {
+			return data, nil
+		}))
+	if err != nil {
+		t.Fatalf("Can't create ws server: %s", err)
+	}
+	defer server.Close()
+
+	time.Sleep(1 * time.Second)
+
+	client, err := wsclient.New("Test", wsclient.ClientParam{CaCertFile: ""}, nil)
+	if err != nil {
+		t.Errorf("Can't create client: %s", err)
+	}
+
+	if err = client.Connect(serverURL); err == nil {
+		t.Error("Expecting an error due to unset custom CA cert")
+	}
+
+	client.Close()
+
+	client, err = wsclient.New("Test", wsclient.ClientParam{CaCertFile: keyFile}, nil)
+	if err == nil {
+		t.Error("Expecting an error due to invalid CA cert file")
+	}
+
+	if err = client.Connect(serverURL); err == nil {
+		t.Error("Expecting an error due to invalid CA cert")
+	}
+
+	client.Close()
+
+	client, err = wsclient.New("Test", wsclient.ClientParam{CaCertFile: "123123"}, nil)
+	if err == nil {
+		t.Error("Expecting an error due to absence of cert file")
+	}
+
+	if err = client.Connect(serverURL); err == nil {
+		t.Error("Expecting an error due to path to nonexistent file")
+	}
+
+	client.Close()
 }
 
 /*******************************************************************************

@@ -29,6 +29,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
+	"gitpct.epam.com/epmd-aepr/aos_common/utils/cryptutils"
 )
 
 /*******************************************************************************
@@ -55,6 +56,7 @@ type Client struct {
 	sync.Mutex
 	isConnected       bool
 	disconnectChannel chan bool
+	wsDialer          websocket.Dialer
 }
 
 type requestParam struct {
@@ -64,12 +66,16 @@ type requestParam struct {
 	rsp        interface{}
 }
 
+type ClientParam struct {
+	CaCertFile string
+}
+
 /*******************************************************************************
  * Public
  ******************************************************************************/
 
 // New creates new ws client
-func New(name string, messageHandler func([]byte)) (client *Client, err error) {
+func New(name string, clientParam ClientParam, messageHandler func([]byte)) (client *Client, err error) {
 	log.WithFields(log.Fields{"client": name}).Debug("New ws client")
 
 	client = &Client{
@@ -77,6 +83,14 @@ func New(name string, messageHandler func([]byte)) (client *Client, err error) {
 		messageHandler:    messageHandler,
 		ErrorChannel:      make(chan error, errorChannelSize),
 		disconnectChannel: make(chan bool)}
+	// Check if system root certificate override is active and if so update tls config with custom CA
+	if len(clientParam.CaCertFile) > 0 {
+		log.WithFields(log.Fields{"client": client.name, "caCert": clientParam.CaCertFile}).Debug("Updating TLS config based on caCert")
+
+		if client.wsDialer.TLSClientConfig, err = cryptutils.GetClientTLSConfig(clientParam.CaCertFile); err != nil {
+			return client, err
+		}
+	}
 
 	return client, nil
 }
@@ -92,7 +106,7 @@ func (client *Client) Connect(url string) (err error) {
 		return fmt.Errorf("client %s already connected", client.name)
 	}
 
-	connection, _, err := websocket.DefaultDialer.Dial(url, nil)
+	connection, _, err := client.wsDialer.Dial(url, nil)
 	if err != nil {
 		return err
 	}
