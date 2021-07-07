@@ -19,7 +19,6 @@ package migration_test
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -30,6 +29,7 @@ import (
 	_ "github.com/mattn/go-sqlite3" //ignore lint
 	log "github.com/sirupsen/logrus"
 
+	"gitpct.epam.com/epmd-aepr/aos_common/aoserrors"
 	"gitpct.epam.com/epmd-aepr/aos_common/migration"
 )
 
@@ -277,7 +277,7 @@ func compareDbVersions(currentVersion uint, name string) (err error) {
 	}
 
 	if dirty == true || dbVersion != currentVersion {
-		return errors.New("DB versions are different")
+		return aoserrors.New("DB versions are different")
 	}
 
 	return nil

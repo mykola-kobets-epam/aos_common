@@ -27,6 +27,7 @@ import (
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 
+	"gitpct.epam.com/epmd-aepr/aos_common/aoserrors"
 	"gitpct.epam.com/epmd-aepr/aos_common/wsclient"
 	"gitpct.epam.com/epmd-aepr/aos_common/wsserver"
 )
@@ -582,7 +583,8 @@ func (handler *testHandler) ClientConnected(client *wsserver.Client) {
 }
 
 func (handler *testHandler) ProcessMessage(client *wsserver.Client, messageType int, message []byte) (response []byte, err error) {
-	return handler.processMessage(client, messageType, message)
+	response, err = handler.processMessage(client, messageType, message)
+	return response, aoserrors.Wrap(err)
 }
 
 func (handler *testHandler) ClientDisconnected(client *wsserver.Client) {

@@ -32,6 +32,7 @@ import (
 	"path"
 	"testing"
 
+	"gitpct.epam.com/epmd-aepr/aos_common/aoserrors"
 	"gitpct.epam.com/epmd-aepr/aos_common/utils/cryptutils"
 	"gitpct.epam.com/epmd-aepr/aos_common/utils/testtools"
 )
@@ -325,12 +326,12 @@ func TestGetTLSConfig(t *testing.T) {
 func savePEMFile(data []byte) (fileName string, err error) {
 	file, err := ioutil.TempFile(tmpDir, "*."+cryptutils.PEMExt)
 	if err != nil {
-		return "", err
+		return "", aoserrors.Wrap(err)
 	}
 	defer file.Close()
 
 	if _, err = file.Write(data); err != nil {
-		return "", err
+		return "", aoserrors.Wrap(err)
 	}
 
 	return file.Name(), nil

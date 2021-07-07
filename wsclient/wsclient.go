@@ -19,8 +19,6 @@ package wsclient
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"reflect"
 	"strings"
 	"sync"
@@ -30,6 +28,7 @@ import (
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 
+	"gitpct.epam.com/epmd-aepr/aos_common/aoserrors"
 	"gitpct.epam.com/epmd-aepr/aos_common/utils/cryptutils"
 )
 
@@ -90,7 +89,7 @@ func New(name string, clientParam ClientParam, messageHandler func([]byte)) (cli
 	// Check if system root certificate override is active and if so update tls config with custom CA
 	if len(clientParam.CaCertFile) > 0 {
 		if client.wsDialer.TLSClientConfig, err = cryptutils.GetClientTLSConfig(clientParam.CaCertFile); err != nil {
-			return client, err
+			return client, aoserrors.Wrap(err)
 		}
 
 		log.WithFields(log.Fields{"client": client.name, "caCert": clientParam.CaCertFile}).Debug("Updating TLS config based on caCert")
@@ -113,12 +112,12 @@ func (client *Client) Connect(url string) (err error) {
 	log.WithFields(log.Fields{"client": client.name, "url": url, "wsTimeout": client.clientParam.WebSocketTimeout}).Debug("Connect to server")
 
 	if client.isConnected {
-		return fmt.Errorf("client %s already connected", client.name)
+		return aoserrors.Errorf("client %s already connected", client.name)
 	}
 	
 	connection, _, err := client.wsDialer.Dial(url, nil)
 	if err != nil {
-		return err
+		return aoserrors.Wrap(err)
 	}
 
 	client.connection = connection
@@ -165,7 +164,7 @@ func (client *Client) Disconnect() (err error) {
 		log.Warn("Waiting for disconnect timeout")
 	}
 
-	return err
+	return aoserrors.Wrap(err)
 }
 
 // GenerateRequestID generates unique request ID
@@ -185,7 +184,7 @@ func (client *Client) IsConnected() (result bool) {
 func (client *Client) Close() (err error) {
 	log.WithFields(log.Fields{"client": client.name}).Info("Close ws client")
 
-	return client.Disconnect()
+	return aoserrors.Wrap(client.Disconnect())
 }
 
 // SendRequest sends request and waits for response
@@ -195,7 +194,7 @@ func (client *Client) SendRequest(idField string, idValue interface{}, req inter
 	for _, field := range strings.Split(idField, ".") {
 		requestID = requestID.FieldByName(field)
 		if !requestID.IsValid() {
-			return errors.New("ID is invalid")
+			return aoserrors.New("ID is invalid")
 		}
 	}
 
@@ -208,17 +207,17 @@ func (client *Client) SendRequest(idField string, idValue interface{}, req inter
 	defer client.requests.Delete(param.id)
 
 	if err = client.SendMessage(req); err != nil {
-		return err
+		return aoserrors.Wrap(err)
 	}
 
 	// Wait response or timeout
 	select {
 	case <-time.After(client.clientParam.WebSocketTimeout):
-		return errors.New("wait response timeout")
+		return aoserrors.New("wait response timeout")
 
 	case _, ok := <-param.rspChannel:
 		if !ok {
-			return errors.New("response channel is closed")
+			return aoserrors.New("response channel is closed")
 		}
 	}
 
@@ -231,12 +230,12 @@ func (client *Client) SendMessage(message interface{}) (err error) {
 	defer client.Unlock()
 
 	if !client.isConnected {
-		return errors.New("client is disconnected")
+		return aoserrors.New("client is disconnected")
 	}
 
 	messageJSON, err := json.Marshal(message)
 	if err != nil {
-		return err
+		return aoserrors.Wrap(err)
 	}
 
 	log.WithFields(log.Fields{"client": client.name, "message": string(messageJSON)}).Debug("Send message")
@@ -246,7 +245,7 @@ func (client *Client) SendMessage(message interface{}) (err error) {
 	if err = client.connection.WriteMessage(websocket.TextMessage, messageJSON); err != nil {
 		log.WithFields(log.Fields{"client": client.name}).Debugf("Send message error: %s", err)
 		client.connection.Close()
-		return err
+		return aoserrors.Wrap(err)
 	}
 
 	return nil
