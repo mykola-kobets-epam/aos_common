@@ -267,7 +267,7 @@ func TestWrongIDRequest(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
-	client, err := wsclient.New("Test", wsclient.ClientParam{CaCertFile: caCert}, nil)
+	client, err := wsclient.New("Test", wsclient.ClientParam{CaCertFile: caCert, WebSocketTimeout: 1 * time.Second}, nil)
 	if err != nil {
 		t.Fatalf("Can't create ws client: %s", err)
 	}
@@ -517,6 +517,57 @@ func TestWrongCaCert(t *testing.T) {
 	}
 
 	client.Close()
+}
+
+func TestWSTimeout(t *testing.T) {
+	type Request struct {
+		Type      string
+		RequestID string
+		Value     int
+	}
+
+	var wsTimeoutData = []struct {
+		timeout    int
+		minTimeout int
+		maxTimeout int
+	}{
+		{0, 120, 121}, // 0 - Use default timeout which is 120 sec
+		{1, 1, 2},
+		{10, 10, 11},
+	}
+
+	server, err := wsserver.New("TestServer", hostURL, crtFile, keyFile, nil)
+	if err != nil {
+		t.Fatalf("Can't create ws server: %s", err)
+	}
+	defer server.Close()
+
+	time.Sleep(1 * time.Second)
+
+	for _, value := range wsTimeoutData {
+		client, err := wsclient.New("Test", wsclient.ClientParam{CaCertFile: caCert, WebSocketTimeout: time.Duration(value.timeout) * time.Second}, nil)
+		if err != nil {
+			t.Fatalf("Can't create ws client: %s", err)
+		}
+		defer client.Close()
+
+		if err = client.Connect(serverURL); err != nil {
+			t.Fatalf("Can't connect to ws server: %s", err)
+		}
+
+		timeReqStart := time.Now()
+
+		req := Request{Type: "GET", RequestID: uuid.New().String()}
+		if err = client.SendRequest("RequestID", req.RequestID, &req, nil); err == nil {
+			t.Error("Error expected")
+		}
+
+		timeReqFinish := time.Now()
+
+		if timeReqFinish.Sub(timeReqStart) > time.Duration(value.maxTimeout)*time.Second || timeReqFinish.Sub(timeReqStart) < time.Duration(value.minTimeout)*time.Second {
+			t.Errorf("Timeout differs a lot from the expected one")
+		}
+	}
 }
 
 /*******************************************************************************

@@ -29,6 +29,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
+
 	"gitpct.epam.com/epmd-aepr/aos_common/utils/cryptutils"
 )
 
@@ -37,8 +38,8 @@ import (
  ******************************************************************************/
 
 const (
-	websocketTimeout = 120 * time.Second
-	errorChannelSize = 1
+	defaultWebsocketTimeout = 120 * time.Second
+	errorChannelSize        = 1
 )
 
 /*******************************************************************************
@@ -57,6 +58,7 @@ type Client struct {
 	isConnected       bool
 	disconnectChannel chan bool
 	wsDialer          websocket.Dialer
+	clientParam       ClientParam
 }
 
 type requestParam struct {
@@ -67,7 +69,8 @@ type requestParam struct {
 }
 
 type ClientParam struct {
-	CaCertFile string
+	CaCertFile       string
+	WebSocketTimeout time.Duration
 }
 
 /*******************************************************************************
@@ -82,14 +85,21 @@ func New(name string, clientParam ClientParam, messageHandler func([]byte)) (cli
 		name:              name,
 		messageHandler:    messageHandler,
 		ErrorChannel:      make(chan error, errorChannelSize),
-		disconnectChannel: make(chan bool)}
+		disconnectChannel: make(chan bool),
+		clientParam:       clientParam}
 	// Check if system root certificate override is active and if so update tls config with custom CA
 	if len(clientParam.CaCertFile) > 0 {
-		log.WithFields(log.Fields{"client": client.name, "caCert": clientParam.CaCertFile}).Debug("Updating TLS config based on caCert")
-
 		if client.wsDialer.TLSClientConfig, err = cryptutils.GetClientTLSConfig(clientParam.CaCertFile); err != nil {
 			return client, err
 		}
+
+		log.WithFields(log.Fields{"client": client.name, "caCert": clientParam.CaCertFile}).Debug("Updating TLS config based on caCert")
+	}
+
+	if clientParam.WebSocketTimeout > 0 {
+		client.clientParam.WebSocketTimeout = clientParam.WebSocketTimeout
+	} else {
+		client.clientParam.WebSocketTimeout = defaultWebsocketTimeout
 	}
 
 	return client, nil
@@ -100,12 +110,12 @@ func (client *Client) Connect(url string) (err error) {
 	client.Lock()
 	defer client.Unlock()
 
-	log.WithFields(log.Fields{"client": client.name, "url": url}).Debug("Connect to server")
+	log.WithFields(log.Fields{"client": client.name, "url": url, "wsTimeout": client.clientParam.WebSocketTimeout}).Debug("Connect to server")
 
 	if client.isConnected {
 		return fmt.Errorf("client %s already connected", client.name)
 	}
-
+	
 	connection, _, err := client.wsDialer.Dial(url, nil)
 	if err != nil {
 		return err
@@ -133,7 +143,7 @@ func (client *Client) Disconnect() (err error) {
 
 	client.isConnected = false
 
-	client.connection.SetWriteDeadline(time.Now().Add(websocketTimeout))
+	client.connection.SetWriteDeadline(time.Now().Add(client.clientParam.WebSocketTimeout))
 
 	if e := client.connection.WriteMessage(websocket.CloseMessage,
 		websocket.FormatCloseMessage(websocket.CloseNormalClosure, "")); e != nil {
@@ -203,7 +213,7 @@ func (client *Client) SendRequest(idField string, idValue interface{}, req inter
 
 	// Wait response or timeout
 	select {
-	case <-time.After(websocketTimeout):
+	case <-time.After(client.clientParam.WebSocketTimeout):
 		return errors.New("wait response timeout")
 
 	case _, ok := <-param.rspChannel:
@@ -231,7 +241,7 @@ func (client *Client) SendMessage(message interface{}) (err error) {
 
 	log.WithFields(log.Fields{"client": client.name, "message": string(messageJSON)}).Debug("Send message")
 
-	client.connection.SetWriteDeadline(time.Now().Add(websocketTimeout))
+	client.connection.SetWriteDeadline(time.Now().Add(client.clientParam.WebSocketTimeout))
 
 	if err = client.connection.WriteMessage(websocket.TextMessage, messageJSON); err != nil {
 		log.WithFields(log.Fields{"client": client.name}).Debugf("Send message error: %s", err)
