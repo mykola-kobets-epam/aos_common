@@ -5,11 +5,11 @@ option go_package = "gitpct.epam.com/epmd-aepr/aos_common/api/updatemanager";
 package updatemanager;
  
 service UpdateController {
-    rpc RegisterUM(stream UpdateStatus) returns (stream SmMessages) {}
+    rpc RegisterUM(stream UpdateStatus) returns (stream CMMessages) {}
 }
  
-message SmMessages {
-    oneof SmMessage {
+message CMMessages {
+    oneof CMMessage {
         PrepareUpdate prepare_update = 1;
         StartUpdate start_update = 2;
         ApplyUpdate apply_update = 3;
@@ -17,7 +17,7 @@ message SmMessages {
     }
 }
  
-// SM messages
+// CM messages
 
 message PrepareComponentInfo {    
     string id = 1;
