@@ -10,7 +10,7 @@ Generate gRPC api:
 
 ```bash
 cd api
-protoc -I iamanager/ iamanager/iamanager.proto --go_out=plugins=grpc:iamanager --go_opt=paths=source_relative
-
-protoc -I updatemanager/ updatemanager/updatemanager.proto --go_out=plugins=grpc:updatemanager --go_opt=paths=source_relative
+protoc --go_out=./iamanager  --go_opt=paths=source_relative --go-grpc_out=./iamanager  --go-grpc_opt=paths=source_relative iamanager/iamanager.proto -I iamanager/ -I ./iamanager/
+protoc --go_out=./iamanager --go_opt=paths=source_relative --go-grpc_out=./iamanager --go-grpc_opt=paths=source_relative iamanager/iamanagerpublic.proto -I ./iamanager/
+protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative updatemanager/updatemanager.proto
 ```
