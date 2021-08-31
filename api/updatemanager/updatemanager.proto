@@ -4,7 +4,7 @@ option go_package = "gitpct.epam.com/epmd-aepr/aos_common/api/updatemanager";
  
 package updatemanager;
  
-service UpdateController {
+service UMController {
     rpc RegisterUM(stream UpdateStatus) returns (stream CMMessages) {}
 }
  

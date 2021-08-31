@@ -14,45 +14,45 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// UpdateControllerClient is the client API for UpdateController service.
+// UMControllerClient is the client API for UMController service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type UpdateControllerClient interface {
-	RegisterUM(ctx context.Context, opts ...grpc.CallOption) (UpdateController_RegisterUMClient, error)
+type UMControllerClient interface {
+	RegisterUM(ctx context.Context, opts ...grpc.CallOption) (UMController_RegisterUMClient, error)
 }
 
-type updateControllerClient struct {
+type uMControllerClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewUpdateControllerClient(cc grpc.ClientConnInterface) UpdateControllerClient {
-	return &updateControllerClient{cc}
+func NewUMControllerClient(cc grpc.ClientConnInterface) UMControllerClient {
+	return &uMControllerClient{cc}
 }
 
-func (c *updateControllerClient) RegisterUM(ctx context.Context, opts ...grpc.CallOption) (UpdateController_RegisterUMClient, error) {
-	stream, err := c.cc.NewStream(ctx, &UpdateController_ServiceDesc.Streams[0], "/updatemanager.UpdateController/RegisterUM", opts...)
+func (c *uMControllerClient) RegisterUM(ctx context.Context, opts ...grpc.CallOption) (UMController_RegisterUMClient, error) {
+	stream, err := c.cc.NewStream(ctx, &UMController_ServiceDesc.Streams[0], "/updatemanager.UMController/RegisterUM", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &updateControllerRegisterUMClient{stream}
+	x := &uMControllerRegisterUMClient{stream}
 	return x, nil
 }
 
-type UpdateController_RegisterUMClient interface {
+type UMController_RegisterUMClient interface {
 	Send(*UpdateStatus) error
 	Recv() (*CMMessages, error)
 	grpc.ClientStream
 }
 
-type updateControllerRegisterUMClient struct {
+type uMControllerRegisterUMClient struct {
 	grpc.ClientStream
 }
 
-func (x *updateControllerRegisterUMClient) Send(m *UpdateStatus) error {
+func (x *uMControllerRegisterUMClient) Send(m *UpdateStatus) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *updateControllerRegisterUMClient) Recv() (*CmMessages, error) {
+func (x *uMControllerRegisterUMClient) Recv() (*CMMessages, error) {
 	m := new(CMMessages)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -60,53 +60,53 @@ func (x *updateControllerRegisterUMClient) Recv() (*CmMessages, error) {
 	return m, nil
 }
 
-// UpdateControllerServer is the server API for UpdateController service.
-// All implementations must embed UnimplementedUpdateControllerServer
+// UMControllerServer is the server API for UMController service.
+// All implementations must embed UnimplementedUMControllerServer
 // for forward compatibility
-type UpdateControllerServer interface {
-	RegisterUM(UpdateController_RegisterUMServer) error
-	mustEmbedUnimplementedUpdateControllerServer()
+type UMControllerServer interface {
+	RegisterUM(UMController_RegisterUMServer) error
+	mustEmbedUnimplementedUMControllerServer()
 }
 
-// UnimplementedUpdateControllerServer must be embedded to have forward compatible implementations.
-type UnimplementedUpdateControllerServer struct {
+// UnimplementedUMControllerServer must be embedded to have forward compatible implementations.
+type UnimplementedUMControllerServer struct {
 }
 
-func (UnimplementedUpdateControllerServer) RegisterUM(UpdateController_RegisterUMServer) error {
+func (UnimplementedUMControllerServer) RegisterUM(UMController_RegisterUMServer) error {
 	return status.Errorf(codes.Unimplemented, "method RegisterUM not implemented")
 }
-func (UnimplementedUpdateControllerServer) mustEmbedUnimplementedUpdateControllerServer() {}
+func (UnimplementedUMControllerServer) mustEmbedUnimplementedUMControllerServer() {}
 
-// UnsafeUpdateControllerServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to UpdateControllerServer will
+// UnsafeUMControllerServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to UMControllerServer will
 // result in compilation errors.
-type UnsafeUpdateControllerServer interface {
-	mustEmbedUnimplementedUpdateControllerServer()
+type UnsafeUMControllerServer interface {
+	mustEmbedUnimplementedUMControllerServer()
 }
 
-func RegisterUpdateControllerServer(s grpc.ServiceRegistrar, srv UpdateControllerServer) {
-	s.RegisterService(&UpdateController_ServiceDesc, srv)
+func RegisterUMControllerServer(s grpc.ServiceRegistrar, srv UMControllerServer) {
+	s.RegisterService(&UMController_ServiceDesc, srv)
 }
 
-func _UpdateController_RegisterUM_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(UpdateControllerServer).RegisterUM(&updateControllerRegisterUMServer{stream})
+func _UMController_RegisterUM_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(UMControllerServer).RegisterUM(&uMControllerRegisterUMServer{stream})
 }
 
-type UpdateController_RegisterUMServer interface {
+type UMController_RegisterUMServer interface {
 	Send(*CMMessages) error
 	Recv() (*UpdateStatus, error)
 	grpc.ServerStream
 }
 
-type updateControllerRegisterUMServer struct {
+type uMControllerRegisterUMServer struct {
 	grpc.ServerStream
 }
 
-func (x *updateControllerRegisterUMServer) Send(m *CmMessages) error {
+func (x *uMControllerRegisterUMServer) Send(m *CMMessages) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *updateControllerRegisterUMServer) Recv() (*UpdateStatus, error) {
+func (x *uMControllerRegisterUMServer) Recv() (*UpdateStatus, error) {
 	m := new(UpdateStatus)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -114,17 +114,17 @@ func (x *updateControllerRegisterUMServer) Recv() (*UpdateStatus, error) {
 	return m, nil
 }
 
-// UpdateController_ServiceDesc is the grpc.ServiceDesc for UpdateController service.
+// UMController_ServiceDesc is the grpc.ServiceDesc for UMController service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var UpdateController_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "updatemanager.UpdateController",
-	HandlerType: (*UpdateControllerServer)(nil),
+var UMController_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "updatemanager.UMController",
+	HandlerType: (*UMControllerServer)(nil),
 	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "RegisterUM",
-			Handler:       _UpdateController_RegisterUM_Handler,
+			Handler:       _UMController_RegisterUM_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},
