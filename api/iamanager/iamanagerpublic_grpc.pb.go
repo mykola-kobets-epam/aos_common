@@ -19,9 +19,9 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type IAManagerPublicClient interface {
-	GetPermissions(ctx context.Context, in *GetPermissionsReq, opts ...grpc.CallOption) (*GetPermissionsRsp, error)
-	GetSystemInfo(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GetSystemInfoRsp, error)
-	GetUsers(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GetUsersRsp, error)
+	GetPermissions(ctx context.Context, in *PermissionsRequest, opts ...grpc.CallOption) (*PermissionsResponse, error)
+	GetSystemInfo(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*SystemInfo, error)
+	GetUsers(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*Users, error)
 	SubscribeUsersChanged(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (IAManagerPublic_SubscribeUsersChangedClient, error)
 }
 
@@ -33,8 +33,8 @@ func NewIAManagerPublicClient(cc grpc.ClientConnInterface) IAManagerPublicClient
 	return &iAManagerPublicClient{cc}
 }
 
-func (c *iAManagerPublicClient) GetPermissions(ctx context.Context, in *GetPermissionsReq, opts ...grpc.CallOption) (*GetPermissionsRsp, error) {
-	out := new(GetPermissionsRsp)
+func (c *iAManagerPublicClient) GetPermissions(ctx context.Context, in *PermissionsRequest, opts ...grpc.CallOption) (*PermissionsResponse, error) {
+	out := new(PermissionsResponse)
 	err := c.cc.Invoke(ctx, "/iamanager.v1.IAManagerPublic/GetPermissions", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -42,8 +42,8 @@ func (c *iAManagerPublicClient) GetPermissions(ctx context.Context, in *GetPermi
 	return out, nil
 }
 
-func (c *iAManagerPublicClient) GetSystemInfo(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GetSystemInfoRsp, error) {
-	out := new(GetSystemInfoRsp)
+func (c *iAManagerPublicClient) GetSystemInfo(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*SystemInfo, error) {
+	out := new(SystemInfo)
 	err := c.cc.Invoke(ctx, "/iamanager.v1.IAManagerPublic/GetSystemInfo", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -51,8 +51,8 @@ func (c *iAManagerPublicClient) GetSystemInfo(ctx context.Context, in *empty.Emp
 	return out, nil
 }
 
-func (c *iAManagerPublicClient) GetUsers(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GetUsersRsp, error) {
-	out := new(GetUsersRsp)
+func (c *iAManagerPublicClient) GetUsers(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*Users, error) {
+	out := new(Users)
 	err := c.cc.Invoke(ctx, "/iamanager.v1.IAManagerPublic/GetUsers", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -76,7 +76,7 @@ func (c *iAManagerPublicClient) SubscribeUsersChanged(ctx context.Context, in *e
 }
 
 type IAManagerPublic_SubscribeUsersChangedClient interface {
-	Recv() (*UsersChangedNtf, error)
+	Recv() (*Users, error)
 	grpc.ClientStream
 }
 
@@ -84,8 +84,8 @@ type iAManagerPublicSubscribeUsersChangedClient struct {
 	grpc.ClientStream
 }
 
-func (x *iAManagerPublicSubscribeUsersChangedClient) Recv() (*UsersChangedNtf, error) {
-	m := new(UsersChangedNtf)
+func (x *iAManagerPublicSubscribeUsersChangedClient) Recv() (*Users, error) {
+	m := new(Users)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -96,9 +96,9 @@ func (x *iAManagerPublicSubscribeUsersChangedClient) Recv() (*UsersChangedNtf, e
 // All implementations must embed UnimplementedIAManagerPublicServer
 // for forward compatibility
 type IAManagerPublicServer interface {
-	GetPermissions(context.Context, *GetPermissionsReq) (*GetPermissionsRsp, error)
-	GetSystemInfo(context.Context, *empty.Empty) (*GetSystemInfoRsp, error)
-	GetUsers(context.Context, *empty.Empty) (*GetUsersRsp, error)
+	GetPermissions(context.Context, *PermissionsRequest) (*PermissionsResponse, error)
+	GetSystemInfo(context.Context, *empty.Empty) (*SystemInfo, error)
+	GetUsers(context.Context, *empty.Empty) (*Users, error)
 	SubscribeUsersChanged(*empty.Empty, IAManagerPublic_SubscribeUsersChangedServer) error
 	mustEmbedUnimplementedIAManagerPublicServer()
 }
@@ -107,13 +107,13 @@ type IAManagerPublicServer interface {
 type UnimplementedIAManagerPublicServer struct {
 }
 
-func (UnimplementedIAManagerPublicServer) GetPermissions(context.Context, *GetPermissionsReq) (*GetPermissionsRsp, error) {
+func (UnimplementedIAManagerPublicServer) GetPermissions(context.Context, *PermissionsRequest) (*PermissionsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPermissions not implemented")
 }
-func (UnimplementedIAManagerPublicServer) GetSystemInfo(context.Context, *empty.Empty) (*GetSystemInfoRsp, error) {
+func (UnimplementedIAManagerPublicServer) GetSystemInfo(context.Context, *empty.Empty) (*SystemInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSystemInfo not implemented")
 }
-func (UnimplementedIAManagerPublicServer) GetUsers(context.Context, *empty.Empty) (*GetUsersRsp, error) {
+func (UnimplementedIAManagerPublicServer) GetUsers(context.Context, *empty.Empty) (*Users, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsers not implemented")
 }
 func (UnimplementedIAManagerPublicServer) SubscribeUsersChanged(*empty.Empty, IAManagerPublic_SubscribeUsersChangedServer) error {
@@ -133,7 +133,7 @@ func RegisterIAManagerPublicServer(s grpc.ServiceRegistrar, srv IAManagerPublicS
 }
 
 func _IAManagerPublic_GetPermissions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetPermissionsReq)
+	in := new(PermissionsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -145,7 +145,7 @@ func _IAManagerPublic_GetPermissions_Handler(srv interface{}, ctx context.Contex
 		FullMethod: "/iamanager.v1.IAManagerPublic/GetPermissions",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IAManagerPublicServer).GetPermissions(ctx, req.(*GetPermissionsReq))
+		return srv.(IAManagerPublicServer).GetPermissions(ctx, req.(*PermissionsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -195,7 +195,7 @@ func _IAManagerPublic_SubscribeUsersChanged_Handler(srv interface{}, stream grpc
 }
 
 type IAManagerPublic_SubscribeUsersChangedServer interface {
-	Send(*UsersChangedNtf) error
+	Send(*Users) error
 	grpc.ServerStream
 }
 
@@ -203,7 +203,7 @@ type iAManagerPublicSubscribeUsersChangedServer struct {
 	grpc.ServerStream
 }
 
-func (x *iAManagerPublicSubscribeUsersChangedServer) Send(m *UsersChangedNtf) error {
+func (x *iAManagerPublicSubscribeUsersChangedServer) Send(m *Users) error {
 	return x.ServerStream.SendMsg(m)
 }
 
