@@ -18,6 +18,7 @@
 package image_test
 
 import (
+	"context"
 	"encoding/hex"
 	"io/ioutil"
 	"os"
@@ -33,12 +34,10 @@ import (
 )
 
 /*******************************************************************************
- * Consts
+ * Vars
  ******************************************************************************/
 
-const (
-	workDir = "tmpFolder"
-)
+var workDir string
 
 /*******************************************************************************
  * Init
@@ -60,8 +59,8 @@ func init() {
 func TestMain(m *testing.M) {
 	var err error
 
-	if err = os.MkdirAll(workDir, 0755); err != nil {
-		log.Fatalf("Error creating tmp dir: %s", err)
+	if workDir, err = ioutil.TempDir("", "aos_"); err != nil {
+		log.Fatalf("Error create work dir: %s", err)
 	}
 
 	ret := m.Run()
@@ -75,7 +74,8 @@ func TestMain(m *testing.M) {
 
 func TestUntarGZArchive(t *testing.T) {
 	// test destination does not exist
-	if err := image.UntarGZArchive(path.Join(workDir, "no_tar"), path.Join(workDir, "no_dest")); err == nil {
+	if err := image.UntarGZArchive(context.Background(),
+		path.Join(workDir, "no_tar"), path.Join(workDir, "no_dest")); err == nil {
 		t.Error("UntarGZArchive should failed:  destination does not exist")
 	}
 
@@ -83,7 +83,8 @@ func TestUntarGZArchive(t *testing.T) {
 		t.Fatalf("Error creating tmp dir %s", err)
 	}
 
-	if err := image.UntarGZArchive(path.Join(workDir, "no_tar"), path.Join(workDir, "outfolder")); err == nil {
+	if err := image.UntarGZArchive(context.Background(),
+		path.Join(workDir, "no_tar"), path.Join(workDir, "outfolder")); err == nil {
 		t.Error("UntarGZArchive should failed:  no such file or directory")
 	}
 
@@ -92,7 +93,8 @@ func TestUntarGZArchive(t *testing.T) {
 		t.Fatalf("Can't write test file: %s", err)
 	}
 
-	if err := image.UntarGZArchive(path.Join(workDir, "testArchive.tar.gz"), ""); err == nil {
+	if err := image.UntarGZArchive(context.Background(),
+		path.Join(workDir, "testArchive.tar.gz"), ""); err == nil {
 		t.Error("UntarGZArchive should failed: invalid header")
 	}
 
@@ -120,7 +122,8 @@ func TestUntarGZArchive(t *testing.T) {
 		t.Fatalf("Can't run tar: %s", err)
 	}
 
-	if err := image.UntarGZArchive(path.Join(workDir, "test_archive.tar.gz"), path.Join(workDir, "outfolder")); err != nil {
+	if err := image.UntarGZArchive(context.Background(),
+		path.Join(workDir, "test_archive.tar.gz"), path.Join(workDir, "outfolder")); err != nil {
 		t.Errorf("some issue with untar: %s", err)
 	}
 
@@ -133,11 +136,11 @@ func TestUntarGZArchive(t *testing.T) {
 }
 
 func TestDownload(t *testing.T) {
-	if _, err := image.Download(workDir, "https://gobyexample.com/maps"); err != nil {
+	if _, err := image.Download(context.Background(), workDir, "https://gobyexample.com/maps"); err != nil {
 		t.Errorf("File can not be downloaded: %s", err)
 	}
 
-	if _, err := image.Download(workDir, "fake_url"); err == nil {
+	if _, err := image.Download(context.Background(), workDir, "fake_url"); err == nil {
 		t.Errorf("Expect error because we use a fake URL: %s", err)
 	}
 }
@@ -149,7 +152,7 @@ func TestCreateFileInfo(t *testing.T) {
 		t.Fatalf("Error create a new file: %s", err)
 	}
 
-	info, err := image.CreateFileInfo(fileNamePath)
+	info, err := image.CreateFileInfo(context.Background(), fileNamePath)
 	if err != nil {
 		t.Errorf("Error creating file info: %s", err)
 	}
@@ -197,12 +200,12 @@ func TestCheckFileInfo(t *testing.T) {
 		t.Fatalf("Error create a new file: %s", fileNamePath)
 	}
 
-	info, err := image.CreateFileInfo(fileNamePath)
+	info, err := image.CreateFileInfo(context.Background(), fileNamePath)
 	if err != nil {
 		t.Errorf("Can't create file info: %s", err)
 	}
 
-	if err = image.CheckFileInfo(fileNamePath, info); err != nil {
+	if err = image.CheckFileInfo(context.Background(), fileNamePath, info); err != nil {
 		t.Errorf("File info mismatch: %s", err)
 	}
 
@@ -210,7 +213,7 @@ func TestCheckFileInfo(t *testing.T) {
 	// Bad file size case
 	tmpFileSize := info.Size
 	info.Size++
-	if err = image.CheckFileInfo(fileNamePath, info); err == nil {
+	if err = image.CheckFileInfo(context.Background(), fileNamePath, info); err == nil {
 		t.Error("File size should not be matched")
 	}
 
@@ -219,7 +222,7 @@ func TestCheckFileInfo(t *testing.T) {
 	// Bad sha256sum case
 	tmpSha256 := info.Sha256[0]
 	info.Sha256[0] -= 1
-	if err = image.CheckFileInfo(fileNamePath, info); err == nil {
+	if err = image.CheckFileInfo(context.Background(), fileNamePath, info); err == nil {
 		t.Error("sha256 should not be matched")
 	}
 
@@ -227,7 +230,7 @@ func TestCheckFileInfo(t *testing.T) {
 
 	// Bad sha512sum case
 	info.Sha512[0] -= 1
-	if err = image.CheckFileInfo(fileNamePath, info); err == nil {
+	if err = image.CheckFileInfo(context.Background(), fileNamePath, info); err == nil {
 		t.Error("sha512 should not be matched")
 	}
 }
