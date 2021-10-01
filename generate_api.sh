@@ -13,8 +13,6 @@ SM_SOURCES="servicemanager/v1/servicemanager.proto"
 
 UM_SOURCES="updatemanager/v1/updatemanager.proto"
 
-TEST_SOURCE="I like programming"
-
 if [ "$#" -lt 1 ]; then
     echo "Usage example: $(basename -- "$0") PROTO_PATH"
     exit 1
@@ -36,7 +34,7 @@ create_package_options () {
 
 
 COMMON_OPTIONS="--proto_path=${1} --go_out=${OUT_DIR} \
-    --go_opt=paths=source_relative --go-grpc_out=api --go-grpc_opt=paths=source_relative"
+    --go_opt=paths=source_relative --go-grpc_out=${OUT_DIR} --go-grpc_opt=paths=source_relative"
 
 # clear output dir
 
