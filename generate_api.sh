@@ -13,6 +13,8 @@ SM_SOURCES="servicemanager/v1/servicemanager.proto"
 
 UM_SOURCES="updatemanager/v1/updatemanager.proto"
 
+CM_SOURCES="communicationmanager/v1/updatescheduler.proto"
+
 if [ "$#" -lt 1 ]; then
     echo "Usage example: $(basename -- "$0") PROTO_PATH"
     exit 1
@@ -52,3 +54,7 @@ protoc $COMMON_OPTIONS $(create_package_options "${SM_SOURCES}" servicemanager) 
 # Generate UM services
 
 protoc $COMMON_OPTIONS $(create_package_options "${UM_SOURCES}" updatemanager) ${UM_SOURCES}
+
+# Generate CM services
+
+protoc $COMMON_OPTIONS $(create_package_options "${CM_SOURCES}" communicationmanager) ${CM_SOURCES}
