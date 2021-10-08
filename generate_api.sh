@@ -20,13 +20,13 @@ fi
 
 create_package_options () {
     go_opt=""
-    
+
     for item in $1; do
-        go_opt+=" --go_opt=M${item}=$2;$2"
+        go_opt+=" --go_opt=M${item}=./;$2"
     done
 
     for item in $1; do
-        go_opt+=" --go-grpc_opt=M${item}=$2;$2"
+        go_opt+=" --go-grpc_opt=M${item}=./;$2"
     done
 
     echo ${go_opt}
