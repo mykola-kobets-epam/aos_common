@@ -3,18 +3,17 @@ image: golang:1.14
 stages:
   - build
   - test
-
-before_script:
-  - apt-get update
-  - apt-get install -y libblkid-dev
-  - apt-get install -y parted
-  - apt-get install -y dosfstools
-  - export GO111MODULE=on
+  - dependency
 
 build:
   tags:
     - cm_ci
   stage: build
+
+  before_script:
+  - apt-get update
+  - apt-get install -y libblkid-dev
+
   script:
     - echo "-------   Start Build   -------"
     - /usr/local/go/bin/go build ./...
@@ -24,8 +23,25 @@ test:
   tags:
     - cm_ci
   stage: test
+
+  before_script:
+  - apt-get update
+  - apt-get install -y libblkid-dev
+  - apt-get install -y parted
+  - apt-get install -y dosfstools
+
   script:
     - echo "-------   Run Unit tests   -------"
     - /usr/local/go/bin/go test $(/usr/local/go/bin/go list ./... | grep -v "/vendor") -failfast -v -coverprofile .testCoverage.txt
     - /usr/local/go/bin/go tool cover -func=.testCoverage.txt
-    
+
+whitesource:
+  only:
+    refs:
+     - master
+     - develop
+  tags:
+    - whitesource_ci
+  stage: dependency
+  script:
+    - java -jar /usr/bin/wss-unified-agent.jar -apiKey $WSS_API_KEY -projectToken $WSS_COMMON_TOKEN -userKey $WSS_USER_KEY  -c ./ci/wss-common.conf -d ./ -scanComment $CI_COMMIT_SHORT_SHA
