@@ -9,7 +9,7 @@ IAM_SOURCES=" \
     iamanager/v2/iamanagerpublic.proto \
     iamanager/v2/iamanagercommon.proto"
 
-SM_SOURCES="servicemanager/v1/servicemanager.proto"
+SM_SOURCES="servicemanager/v2/servicemanager.proto"
 
 UM_SOURCES="updatemanager/v1/updatemanager.proto"
 
@@ -40,8 +40,9 @@ COMMON_OPTIONS="--proto_path=${1} --go_out=${OUT_DIR} \
 
 # clear output dir
 
-rm ${OUT_DIR} -rf
-mkdir ${OUT_DIR}
+mkdir -p ${OUT_DIR}
+
+rm -rf ${OUT_DIR}/communicationmanager ${OUT_DIR}/iamanager ${OUT_DIR}/servicemanager ${OUT_DIR}/updatemanager
 
 # Generate IAM services
 

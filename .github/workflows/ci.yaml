@@ -5,7 +5,12 @@ on:
     branches:
       - main
       - develop
+      - feature_*
   pull_request:
+    branches:
+      - main
+      - develop
+      - feature_*
 
 jobs:
   tests:
@@ -17,11 +22,12 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.14
+          go-version: 1.18.2
 
       - name: Test
         run: |
-          sudo apt-get install -y libblkid-dev parted dosfstools
+          sudo apt-get update
+          sudo apt-get install -y libblkid-dev parted dosfstools libsystemd-dev
           sudo env "PATH=$PATH" go test -v ./... -failfast -coverprofile=coverage.out -covermode=atomic
           sudo chmod 666 coverage.out
 
@@ -29,7 +35,6 @@ jobs:
         run: bash <(curl -s https://codecov.io/bash)
 
       - name: Lint
-        uses: golangci/golangci-lint-action@v2
+        uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.43.0
-          skip-go-installation: true
+          version: v1.47.3
