@@ -19,6 +19,7 @@ package pbconvert_test
 
 import (
 	"os"
+	"reflect"
 	"testing"
 
 	"github.com/aoscloud/aos_common/aostypes"
@@ -70,6 +71,10 @@ func TestInstanceFilterToPB(t *testing.T) {
 			expectedIdent: &pb.InstanceIdent{ServiceId: "s1", SubjectId: "", Instance: -1},
 			filter:        cloudprotocol.NewInstanceFilter("s1", "", -1),
 		},
+		{
+			expectedIdent: &pb.InstanceIdent{ServiceId: "", SubjectId: "", Instance: -1},
+			filter:        cloudprotocol.NewInstanceFilter("", "", -1),
+		},
 	}
 
 	for _, testItem := range testData {
@@ -100,5 +105,75 @@ func TestInstanceIdentFromPB(t *testing.T) {
 
 	if expectedInstance != receivedInstance {
 		t.Error("Incorrect instance")
+	}
+}
+
+func TestNetworkParametersToPB(t *testing.T) {
+	expectedNetwork := &pb.NetworkParameters{
+		Ip:         "172.18.0.1",
+		Subnet:     "172.18.0.0/16",
+		DnsServers: []string{"10.10.0.1"},
+		Rules: []*pb.FirewallRule{
+			{
+				Proto:   "tcp",
+				DstIp:   "172.19.0.1",
+				SrcIp:   "172.18.0.1",
+				DstPort: "8080",
+			},
+		},
+	}
+
+	pbNetwork := pbconvert.NetworkParametersToPB(
+		aostypes.NetworkParameters{
+			IP:         "172.18.0.1",
+			Subnet:     "172.18.0.0/16",
+			DNSServers: []string{"10.10.0.1"},
+			FirewallRules: []aostypes.FirewallRule{
+				{
+					Proto:   "tcp",
+					DstIP:   "172.19.0.1",
+					SrcIP:   "172.18.0.1",
+					DstPort: "8080",
+				},
+			},
+		})
+
+	if !proto.Equal(pbNetwork, expectedNetwork) {
+		t.Error("Incorrect network parameters")
+	}
+}
+
+func TestNetworkParametersFromPB(t *testing.T) {
+	expectedNetwork := aostypes.NetworkParameters{
+		IP:         "172.18.0.1",
+		Subnet:     "172.18.0.0/16",
+		DNSServers: []string{"10.10.0.1"},
+		FirewallRules: []aostypes.FirewallRule{
+			{
+				Proto:   "tcp",
+				DstIP:   "172.19.0.1",
+				SrcIP:   "172.18.0.1",
+				DstPort: "8080",
+			},
+		},
+	}
+
+	receivedNetwork := pbconvert.NewNetworkParametersFromPB(
+		&pb.NetworkParameters{
+			Ip:         "172.18.0.1",
+			Subnet:     "172.18.0.0/16",
+			DnsServers: []string{"10.10.0.1"},
+			Rules: []*pb.FirewallRule{
+				{
+					Proto:   "tcp",
+					DstIp:   "172.19.0.1",
+					SrcIp:   "172.18.0.1",
+					DstPort: "8080",
+				},
+			},
+		})
+
+	if !reflect.DeepEqual(expectedNetwork, receivedNetwork) {
+		t.Error("Incorrect network parameters")
 	}
 }

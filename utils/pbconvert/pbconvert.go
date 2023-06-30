@@ -28,7 +28,11 @@ import (
  **********************************************************************************************************************/
 
 func InstanceFilterToPB(filter cloudprotocol.InstanceFilter) *pb.InstanceIdent {
-	ident := &pb.InstanceIdent{ServiceId: *filter.ServiceID, SubjectId: "", Instance: -1}
+	ident := &pb.InstanceIdent{ServiceId: "", SubjectId: "", Instance: -1}
+
+	if filter.ServiceID != nil {
+		ident.ServiceId = *filter.ServiceID
+	}
 
 	if filter.SubjectID != nil {
 		ident.SubjectId = *filter.SubjectID
@@ -45,10 +49,56 @@ func InstanceIdentToPB(ident aostypes.InstanceIdent) *pb.InstanceIdent {
 	return &pb.InstanceIdent{ServiceId: ident.ServiceID, SubjectId: ident.SubjectID, Instance: int64(ident.Instance)}
 }
 
+func NetworkParametersToPB(params aostypes.NetworkParameters) *pb.NetworkParameters {
+	networkParams := &pb.NetworkParameters{
+		Ip:         params.IP,
+		Subnet:     params.Subnet,
+		VlanId:     params.VlanID,
+		DnsServers: make([]string, len(params.DNSServers)),
+		Rules:      make([]*pb.FirewallRule, len(params.FirewallRules)),
+	}
+
+	copy(networkParams.DnsServers, params.DNSServers)
+
+	for i, rule := range params.FirewallRules {
+		networkParams.Rules[i] = &pb.FirewallRule{
+			DstIp:   rule.DstIP,
+			SrcIp:   rule.SrcIP,
+			DstPort: rule.DstPort,
+			Proto:   rule.Proto,
+		}
+	}
+
+	return networkParams
+}
+
 func NewInstanceIdentFromPB(ident *pb.InstanceIdent) aostypes.InstanceIdent {
 	return aostypes.InstanceIdent{
 		ServiceID: ident.ServiceId,
 		SubjectID: ident.SubjectId,
 		Instance:  uint64(ident.Instance),
 	}
+}
+
+func NewNetworkParametersFromPB(params *pb.NetworkParameters) aostypes.NetworkParameters {
+	networkParams := aostypes.NetworkParameters{
+		IP:            params.Ip,
+		Subnet:        params.Subnet,
+		VlanID:        params.VlanId,
+		DNSServers:    make([]string, len(params.DnsServers)),
+		FirewallRules: make([]aostypes.FirewallRule, len(params.Rules)),
+	}
+
+	copy(networkParams.DNSServers, params.DnsServers)
+
+	for i, rule := range params.Rules {
+		networkParams.FirewallRules[i] = aostypes.FirewallRule{
+			DstIP:   rule.DstIp,
+			SrcIP:   rule.SrcIp,
+			DstPort: rule.DstPort,
+			Proto:   rule.Proto,
+		}
+	}
+
+	return networkParams
 }
