@@ -24,7 +24,7 @@ import (
 
 	"github.com/aosedge/aos_common/aostypes"
 	"github.com/aosedge/aos_common/api/cloudprotocol"
-	pb "github.com/aosedge/aos_common/api/servicemanager/v3"
+	pb "github.com/aosedge/aos_common/api/servicemanager"
 	"github.com/aosedge/aos_common/utils/pbconvert"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
