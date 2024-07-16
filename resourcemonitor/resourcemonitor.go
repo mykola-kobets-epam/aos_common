@@ -78,8 +78,8 @@ type NodeInfoProvider interface {
 
 // NodeConfigProvider interface to get node config.
 type NodeConfigProvider interface {
-	GetNodeConfig() (cloudprotocol.NodeConfig, error)
-	NodeConfigChangedChannel() <-chan cloudprotocol.NodeConfig
+	GetCurrentNodeConfig() (cloudprotocol.NodeConfig, error)
+	CurrentNodeConfigChannel() <-chan cloudprotocol.NodeConfig
 }
 
 // MonitoringSender sends monitoring data.
@@ -208,7 +208,7 @@ func New(
 		return nil, aoserrors.Wrap(err)
 	}
 
-	nodeConfig, err := nodeConfigProvider.GetNodeConfig()
+	nodeConfig, err := nodeConfigProvider.GetCurrentNodeConfig()
 	if err != nil {
 		log.Errorf("Can't get node config: %v", err)
 	}
@@ -461,7 +461,7 @@ func (monitor *ResourceMonitor) run(ctx context.Context) {
 		case <-ctx.Done():
 			return
 
-		case nodeConfig := <-monitor.nodeConfigProvider.NodeConfigChangedChannel():
+		case nodeConfig := <-monitor.nodeConfigProvider.CurrentNodeConfigChannel():
 			if err := monitor.setupSystemAlerts(nodeConfig); err != nil {
 				log.Errorf("Can't setup system alerts: %v", err)
 			}
