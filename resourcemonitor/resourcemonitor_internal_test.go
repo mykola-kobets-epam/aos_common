@@ -1193,11 +1193,11 @@ func (provider *testNodeInfoProvider) NodeInfoChangedChannel() <-chan cloudproto
 	return nil
 }
 
-func (provider *testNodeConfigProvider) GetNodeConfig() (cloudprotocol.NodeConfig, error) {
+func (provider *testNodeConfigProvider) GetCurrentNodeConfig() (cloudprotocol.NodeConfig, error) {
 	return provider.nodeConfig, nil
 }
 
-func (provider *testNodeConfigProvider) NodeConfigChangedChannel() <-chan cloudprotocol.NodeConfig {
+func (provider *testNodeConfigProvider) CurrentNodeConfigChannel() <-chan cloudprotocol.NodeConfig {
 	return nil
 }
 
