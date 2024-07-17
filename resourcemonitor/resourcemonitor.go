@@ -73,7 +73,7 @@ type AlertSender interface {
 
 // NodeInfoProvider interface to get node information.
 type NodeInfoProvider interface {
-	GetNodeInfo() (cloudprotocol.NodeInfo, error)
+	GetCurrentNodeInfo() (cloudprotocol.NodeInfo, error)
 }
 
 // NodeConfigProvider interface to get node config.
@@ -193,7 +193,7 @@ func New(
 		sourceSystemUsage:  getSourceSystemUsage(config.Source),
 	}
 
-	nodeInfo, err := nodeInfoProvider.GetNodeInfo()
+	nodeInfo, err := nodeInfoProvider.GetCurrentNodeInfo()
 	if err != nil {
 		return nil, aoserrors.Wrap(err)
 	}

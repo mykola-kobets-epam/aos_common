@@ -1185,7 +1185,7 @@ func (sender *testMonitoringSender) SendNodeMonitoring(monitoringData aostypes.N
 	sender.monitoringData <- monitoringData
 }
 
-func (provider *testNodeInfoProvider) GetNodeInfo() (cloudprotocol.NodeInfo, error) {
+func (provider *testNodeInfoProvider) GetCurrentNodeInfo() (cloudprotocol.NodeInfo, error) {
 	return provider.nodeInfo, nil
 }
 
