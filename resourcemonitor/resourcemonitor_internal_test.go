@@ -53,7 +53,7 @@ func init() {
  **********************************************************************************************************************/
 
 type testAlertsSender struct {
-	alerts []cloudprotocol.AlertItem
+	alerts []interface{}
 }
 
 type trafficMonitoringData struct {
@@ -74,7 +74,7 @@ type testUsageData struct {
 }
 
 type testData struct {
-	alerts            []cloudprotocol.AlertItem
+	alerts            []interface{}
 	monitoringData    aostypes.NodeMonitoring
 	trafficMonitoring testTrafficMonitoring
 	usageData         testUsageData
@@ -228,6 +228,8 @@ func TestSystemAlerts(t *testing.T) {
 
 	config := Config{PollPeriod: aostypes.Duration{Duration: duration}}
 
+	nodeID := nodeInfoProvider.nodeInfo.NodeID
+
 	testData := []testData{
 		{
 			trafficMonitoring: testTrafficMonitoring{
@@ -268,9 +270,9 @@ func TestSystemAlerts(t *testing.T) {
 				ram:  1100,
 				disk: 2300,
 			},
-			alerts: []cloudprotocol.AlertItem{
-				prepareSystemAlertItem("cpu", time.Time{}, 4500, "raise"),
-				prepareSystemAlertItem("outTraffic", time.Time{}, 250, "raise"),
+			alerts: []interface{}{
+				prepareSystemAlertItem(nodeID, "cpu", time.Time{}, 4500, "raise"),
+				prepareSystemAlertItem(nodeID, "outTraffic", time.Time{}, 250, "raise"),
 			},
 		},
 		{
@@ -291,12 +293,12 @@ func TestSystemAlerts(t *testing.T) {
 				ram:  2100,
 				disk: 4300,
 			},
-			alerts: []cloudprotocol.AlertItem{
-				prepareSystemAlertItem("cpu", time.Time{}, 4500, "raise"),
-				prepareSystemAlertItem("ram", time.Time{}, 2100, "raise"),
-				prepareSystemAlertItem("generic", time.Time{}, 4300, "raise"),
-				prepareSystemAlertItem("inTraffic", time.Time{}, 350, "raise"),
-				prepareSystemAlertItem("outTraffic", time.Time{}, 250, "raise"),
+			alerts: []interface{}{
+				prepareSystemAlertItem(nodeID, "cpu", time.Time{}, 4500, "raise"),
+				prepareSystemAlertItem(nodeID, "ram", time.Time{}, 2100, "raise"),
+				prepareSystemAlertItem(nodeID, "generic", time.Time{}, 4300, "raise"),
+				prepareSystemAlertItem(nodeID, "inTraffic", time.Time{}, 350, "raise"),
+				prepareSystemAlertItem(nodeID, "outTraffic", time.Time{}, 250, "raise"),
 			},
 		},
 	}
@@ -320,11 +322,7 @@ func TestSystemAlerts(t *testing.T) {
 				t.Errorf("Incorrect system monitoring data: %v", monitoringData.NodeData)
 			}
 
-			for i := range alertSender.alerts {
-				alertSender.alerts[i].Timestamp = time.Time{}
-			}
-
-			if !reflect.DeepEqual(alertSender.alerts, item.alerts) {
+			if !AlertSlicesEqual(alertSender.alerts, item.alerts) {
 				t.Errorf("Incorrect system alerts: %v", alertSender.alerts)
 			}
 
@@ -519,7 +517,7 @@ func TestInstances(t *testing.T) {
 					},
 				},
 			},
-			alerts: []cloudprotocol.AlertItem{
+			alerts: []interface{}{
 				prepareInstanceAlertItem(aostypes.InstanceIdent{
 					ServiceID: "service2",
 					SubjectID: "subject1",
@@ -606,7 +604,7 @@ func TestInstances(t *testing.T) {
 					},
 				},
 			},
-			alerts: []cloudprotocol.AlertItem{
+			alerts: []interface{}{
 				prepareInstanceAlertItem(aostypes.InstanceIdent{
 					ServiceID: "service1",
 					SubjectID: "subject2",
@@ -698,7 +696,7 @@ func TestInstances(t *testing.T) {
 					},
 				},
 			},
-			alerts: []cloudprotocol.AlertItem{
+			alerts: []interface{}{
 				prepareInstanceAlertItem(aostypes.InstanceIdent{
 					ServiceID: "service1",
 					SubjectID: "subject2",
@@ -768,9 +766,7 @@ func TestInstances(t *testing.T) {
 	alertLoop:
 		for _, expectedAlert := range item.alerts {
 			for _, receivedAlert := range alertSender.alerts {
-				receivedAlert.Timestamp = time.Time{}
-
-				if reflect.DeepEqual(expectedAlert, receivedAlert) {
+				if AlertsEqual(expectedAlert, receivedAlert) {
 					continue alertLoop
 				}
 			}
@@ -1158,7 +1154,7 @@ func TestInstanceAveraging(t *testing.T) {
  * Interfaces
  **********************************************************************************************************************/
 
-func (sender *testAlertsSender) SendAlert(alert cloudprotocol.AlertItem) {
+func (sender *testAlertsSender) SendAlert(alert interface{}) {
 	sender.alerts = append(sender.alerts, alert)
 }
 
@@ -1235,4 +1231,48 @@ func (host *testInstancesUsage) FillSystemInfo(instanceID string, instance *inst
 	instance.monitoring.RAM = data.ram
 
 	return nil
+}
+
+func AlertsEqual(alert1, alert2 interface{}) bool {
+	switch alert1casted := alert1.(type) {
+	case cloudprotocol.SystemQuotaAlert:
+		alert2casted, ok := alert2.(cloudprotocol.SystemQuotaAlert)
+
+		if !ok {
+			return false
+		}
+
+		alert1casted.Timestamp = time.Time{}
+		alert2casted.Timestamp = time.Time{}
+
+		return reflect.DeepEqual(alert1casted, alert2casted)
+
+	case cloudprotocol.InstanceQuotaAlert:
+		alert2casted, ok := alert2.(cloudprotocol.InstanceQuotaAlert)
+
+		if !ok {
+			return false
+		}
+
+		alert1casted.Timestamp = time.Time{}
+		alert2casted.Timestamp = time.Time{}
+
+		return reflect.DeepEqual(alert1casted, alert2casted)
+	}
+
+	return false
+}
+
+func AlertSlicesEqual(alerts1, alerts2 []interface{}) bool {
+	if len(alerts1) != len(alerts2) {
+		return false
+	}
+
+	for i := range alerts1 {
+		if !AlertsEqual(alerts1[i], alerts2[i]) {
+			return false
+		}
+	}
+
+	return true
 }
