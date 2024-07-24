@@ -29,6 +29,7 @@ import (
 	"github.com/aosedge/aos_common/aoserrors"
 	"github.com/aosedge/aos_common/aostypes"
 	"github.com/aosedge/aos_common/api/cloudprotocol"
+	"github.com/aosedge/aos_common/utils/alertutils"
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/mem"
 	log "github.com/sirupsen/logrus"
@@ -766,7 +767,7 @@ func TestInstances(t *testing.T) {
 	alertLoop:
 		for _, expectedAlert := range item.alerts {
 			for _, receivedAlert := range alertSender.alerts {
-				if AlertsEqual(expectedAlert, receivedAlert) {
+				if alertutils.AlertsPayloadEqual(expectedAlert, receivedAlert) {
 					continue alertLoop
 				}
 			}
@@ -1233,43 +1234,13 @@ func (host *testInstancesUsage) FillSystemInfo(instanceID string, instance *inst
 	return nil
 }
 
-func AlertsEqual(alert1, alert2 interface{}) bool {
-	switch alert1casted := alert1.(type) {
-	case cloudprotocol.SystemQuotaAlert:
-		alert2casted, ok := alert2.(cloudprotocol.SystemQuotaAlert)
-
-		if !ok {
-			return false
-		}
-
-		alert1casted.Timestamp = time.Time{}
-		alert2casted.Timestamp = time.Time{}
-
-		return reflect.DeepEqual(alert1casted, alert2casted)
-
-	case cloudprotocol.InstanceQuotaAlert:
-		alert2casted, ok := alert2.(cloudprotocol.InstanceQuotaAlert)
-
-		if !ok {
-			return false
-		}
-
-		alert1casted.Timestamp = time.Time{}
-		alert2casted.Timestamp = time.Time{}
-
-		return reflect.DeepEqual(alert1casted, alert2casted)
-	}
-
-	return false
-}
-
 func AlertSlicesEqual(alerts1, alerts2 []interface{}) bool {
 	if len(alerts1) != len(alerts2) {
 		return false
 	}
 
 	for i := range alerts1 {
-		if !AlertsEqual(alerts1[i], alerts2[i]) {
+		if !alertutils.AlertsPayloadEqual(alerts1[i], alerts2[i]) {
 			return false
 		}
 	}
