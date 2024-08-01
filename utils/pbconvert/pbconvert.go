@@ -89,6 +89,10 @@ func ErrorInfoFromPB(errorInfo *pbcommon.ErrorInfo) *cloudprotocol.ErrorInfo {
 		return nil
 	}
 
+	if errorInfo.GetAosCode() == 0 && errorInfo.GetExitCode() == 0 && len(errorInfo.GetMessage()) == 0 {
+		return nil
+	}
+
 	return &cloudprotocol.ErrorInfo{
 		AosCode:  int(errorInfo.GetAosCode()),
 		ExitCode: int(errorInfo.GetExitCode()),
