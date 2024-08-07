@@ -32,7 +32,7 @@ const (
 )
 
 // UnitSecretVersion specifies supported version of UnitSecret message.
-const UnitSecretVersion = 2
+const UnitSecretVersion = "2.0.0"
 
 /***********************************************************************************************************************
  * Types
