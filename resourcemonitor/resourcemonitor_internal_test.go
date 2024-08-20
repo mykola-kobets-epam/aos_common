@@ -1184,7 +1184,7 @@ func (provider *testNodeConfigProvider) GetCurrentNodeConfig() (cloudprotocol.No
 	return provider.nodeConfig, nil
 }
 
-func (provider *testNodeConfigProvider) CurrentNodeConfigChannel() <-chan cloudprotocol.NodeConfig {
+func (provider *testNodeConfigProvider) SubscribeCurrentNodeConfigChange() <-chan cloudprotocol.NodeConfig {
 	return nil
 }
 
