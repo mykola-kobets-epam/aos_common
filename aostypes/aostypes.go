@@ -235,12 +235,12 @@ type PartitionUsage struct {
 
 // MonitoringData monitoring data.
 type MonitoringData struct {
-	Timestamp time.Time        `json:"timestamp"`
-	RAM       uint64           `json:"ram"`
-	CPU       uint64           `json:"cpu"`
-	Download  uint64           `json:"download"`
-	Upload    uint64           `json:"upload"`
-	Disk      []PartitionUsage `json:"disk"`
+	Timestamp  time.Time        `json:"timestamp"`
+	RAM        uint64           `json:"ram"`
+	CPU        uint64           `json:"cpu"`
+	Download   uint64           `json:"download"`
+	Upload     uint64           `json:"upload"`
+	Partitions []PartitionUsage `json:"partitions"`
 }
 
 type InstanceMonitoring struct {
