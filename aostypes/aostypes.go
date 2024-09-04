@@ -187,11 +187,11 @@ type PartitionAlertRule struct {
 
 // AlertRules define service monitoring alerts rules.
 type AlertRules struct {
-	RAM       *AlertRulePercents   `json:"ram,omitempty"`
-	CPU       *AlertRulePercents   `json:"cpu,omitempty"`
-	UsedDisks []PartitionAlertRule `json:"usedDisks,omitempty"`
-	Download  *AlertRulePoints     `json:"download,omitempty"`
-	Upload    *AlertRulePoints     `json:"upload,omitempty"`
+	RAM        *AlertRulePercents   `json:"ram,omitempty"`
+	CPU        *AlertRulePercents   `json:"cpu,omitempty"`
+	Partitions []PartitionAlertRule `json:"partitions,omitempty"`
+	Download   *AlertRulePoints     `json:"download,omitempty"`
+	Upload     *AlertRulePoints     `json:"upload,omitempty"`
 }
 
 // ResourceRatiosInfo resource ratios info.
