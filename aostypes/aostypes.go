@@ -201,6 +201,13 @@ type ResourceRatiosInfo struct {
 	Storage *float64 `json:"storage"`
 }
 
+// RequestedResources requested service resources (in absolute values: dmips, bytes).
+type RequestedResources struct {
+	CPU     *uint64 `json:"cpu"`
+	RAM     *uint64 `json:"ram"`
+	Storage *uint64 `json:"storage"`
+}
+
 // ServiceConfig Aos service configuration.
 type ServiceConfig struct {
 	Created            time.Time                    `json:"created"`
@@ -212,7 +219,7 @@ type ServiceConfig struct {
 	Sysctl             map[string]string            `json:"sysctl,omitempty"`
 	OfflineTTL         Duration                     `json:"offlineTtl,omitempty"`
 	Quotas             ServiceQuotas                `json:"quotas"`
-	ResourceRatios     *ResourceRatiosInfo          `json:"resourceRatios"`
+	RequestedResources *RequestedResources          `json:"requestedResources"`
 	AllowedConnections map[string]struct{}          `json:"allowedConnections,omitempty"`
 	Devices            []ServiceDevice              `json:"devices,omitempty"`
 	Resources          []string                     `json:"resources,omitempty"`
