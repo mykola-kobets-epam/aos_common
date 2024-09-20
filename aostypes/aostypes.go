@@ -199,6 +199,7 @@ type ResourceRatiosInfo struct {
 	CPU     *float64 `json:"cpu"`
 	RAM     *float64 `json:"ram"`
 	Storage *float64 `json:"storage"`
+	State   *float64 `json:"state"`
 }
 
 // RequestedResources requested service resources (in absolute values: dmips, bytes).
@@ -206,6 +207,7 @@ type RequestedResources struct {
 	CPU     *uint64 `json:"cpu"`
 	RAM     *uint64 `json:"ram"`
 	Storage *uint64 `json:"storage"`
+	State   *uint64 `json:"state"`
 }
 
 // ServiceConfig Aos service configuration.
